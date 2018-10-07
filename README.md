@@ -24,6 +24,10 @@ The minimum JDK required is 8.
 </dependency>
 ```
 
+**Javadocs**
+
+https://illgrenoble.github.io/preql
+
 ### Example
 
 A Spring Boot integration example is coming soon.
