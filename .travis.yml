@@ -4,11 +4,11 @@ dist: trusty
 
 jdk:
 - openjdk8
-- openjdk9
-- openjdk10
-- oraclejdk8
-- oraclejdk9
-- oraclejdk10
+#- openjdk9
+#- openjdk10
+#- oraclejdk8
+#- oraclejdk9
+#- oraclejdk10
 
 install: /bin/true
 
@@ -22,3 +22,15 @@ env:
 script:
 - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version
 - mvn test verify --batch-mode
+
+after_success:
+- mvn javadoc:javadoc
+
+deploy:
+  provider: pages
+  local-dir: target/site/apidocs/
+  skip-cleanup: true
+  github-token: $GH_TOKEN
+  keep-history: false
+  on:
+    branch: master
