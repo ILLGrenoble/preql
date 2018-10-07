@@ -1,5 +1,7 @@
 # Preql
 
+[![Build Status](https://travis-ci.org/ILLGrenoble/preql.svg?branch=master)](https://travis-ci.org/ILLGrenoble/preql)
+
 Preql (Predicate query language) is a project designed to filter JPA collections through client-side expressions.
 
 This library provides a custom SQL grammar that is converted to a JPA [Criteria Query](http://docs.oracle.com/javaee/6/tutorial/doc/gjitv.html) (object representation of JPQL), which is translated to an SQL query.  The initial use case for Preql was to provide filtering of collections using GraphQL. It can, however, be used for any other client side implementations that requires collection filtering (REST for example).
@@ -347,7 +349,7 @@ QueryParser.addValueParser(new BooleanValueParser());
 
 ### Example queries
 
-Here is a list of some example queries. You can find more examples in the tests directory.
+Here is a list of some example queries. You can find more examples, look at the in the [FilterQueryTest](https://github.com/ILLGrenoble/preql/blob/master/src/test/java/eu/ill/preql/FilterQueryTest.java) file in the tests directory.
 
 **Examples matrix**
 
@@ -381,7 +383,7 @@ Here is a list of some example queries. You can find more examples in the tests 
 
 We wanted to give users the ability to filter graphql collections using an expressive syntax.
 
-```json
+```
 query {
 	courses(filter: { 
 		query: "tags IN :tags AND startDate >= startDate", 
@@ -396,6 +398,10 @@ query {
 ```
 
 ### Development
+
+**Grammar**
+
+[Antlr4 grammar](https://github.com/ILLGrenoble/preql/blob/master/src/main/antlr4/eu/ill/preql/Filter.g4)
 
 **Building**
 
