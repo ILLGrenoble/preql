@@ -1,0 +1,24 @@
+language: java
+
+dist: trusty
+
+jdk:
+- openjdk8
+- openjdk9
+- openjdk10
+- oraclejdk8
+- oraclejdk9
+- oraclejdk10
+
+install: /bin/true
+
+branches:
+  only:
+  - master
+
+env:
+- JAVA_TOOL_OPTIONS="-Xmx2g"
+
+script:
+- mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version
+- mvn test verify --batch-mode

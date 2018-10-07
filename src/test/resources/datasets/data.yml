@@ -1,0 +1,91 @@
+teacher:
+- id: 1
+  name: Jamie Hall
+  age: 30
+- id: 2
+  name: Joe Bloggs
+  age: 40
+- id: 3
+  name: Jane Doe
+  age: 50
+
+tenant:
+- id: 1
+  name: "Tenant 1"
+
+course:
+- id: 1
+  name: "Web Development Course"
+  credits: 1000
+  code: "C-WD"
+  active: true
+  description: "This course is dedicated to discovering web development"
+  teacher_id: 1
+  startDate: "[DAY,YESTERDAY]"
+  price: 100.00
+  tenant_id: 1
+  duration: 36000000
+  summary: "Discovering web development"
+- id: 2
+  name: "Embedded Systems"
+  credits: 1000
+  code: "C-EMS"
+  active: false
+  description: "This course is dedicated to discovering embedded systems"
+  teacher_id: 2
+  price: 100.00
+  startDate: "2018-01-01"
+  tenant_id: 1
+  duration: 36000000
+- id: 3
+  name: "Complete Java Masterclass"
+  credits: 2000
+  code: "C-JAVA"
+  active: true
+  description: "Learn to master Java 8 and Java 10 core development step-by-step and make your first unique, advanced program in 30 days"
+  teacher_id: 1
+  price: 200.00
+  tenant_id: 1
+  startDate: "2018-02-01"
+  duration: 72000000
+
+- id: 4
+  name: "Complete Python Bootcamp: Go from zero to hero in Python 3"
+  credits: 2000
+  code: "C-PYTHON"
+  active: true
+  description: "Learn Python like a Professional! Start from the basics and go all the way to creating your own applications and games!"
+  teacher_id: 2
+  price: 200.00
+  tenant_id: 1
+  startDate: "2018-03-01"
+  duration: 72000000
+- id: 5
+  name: "The Complete Node.js Developer Course (2nd Edition)"
+  credits: 2000
+  code: "C-NODE"
+  active: true
+  description: "Learn Node.js by building real-world applications with Node, Express, MongoDB, Mocha, and more!"
+  teacher_id: 3
+  price: 200.00
+  tenant_id: 1
+  startDate: "2018-04-01"
+  duration: 1800000
+
+attachment:
+- id: 1
+  name: "1.pdf"
+  size: 1000000
+  course_id: 1
+
+tag:
+- id: 1
+  name: computing
+- id: 2
+  name: programming
+
+course_tag:
+- course_id: 1
+  tag_id: 1
+- course_id: 1
+  tag_id: 2
