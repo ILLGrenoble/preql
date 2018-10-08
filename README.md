@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ILLGrenoble/preql.svg?branch=master)](https://travis-ci.org/ILLGrenoble/preql)
 
-Preql (Predicate query language) is a project designed to filter JPA collections through client-side expressions.
+Preql (Predicate query language) is a project designed to filter JPA collections using client-side expressions.
 
 This library provides a custom SQL grammar that is converted to a JPA [Criteria Query](http://docs.oracle.com/javaee/6/tutorial/doc/gjitv.html) (object representation of JPQL), which is translated to an SQL query.  The initial use case for Preql was to provide filtering of collections using GraphQL. It can, however, be used for any other client side implementations that requires collection filtering (REST for example).
 
@@ -36,14 +36,14 @@ A Spring Boot integration example is coming soon.
 
 **Defining a filter query provider for an entity**
 
-Before you can start filtering a collection, you must first define a query provider for a given entity class. 
+Before you can start filtering a collection, you must first define a filter query provider for a given entity class. 
 
 There are two types of fields that can be defined:
 
  -	`field` A field that can be queried but cannot be ordered (useful if you don't want to order on a sub collection)
  -	`orderableField` A field that can be both queried and ordered by
 
-In the code below, we are defining a provider for the `Course` entity and registering the fields. Fields that can be queried must be **explicitliy** defined.
+In the code below, we are defining a provider for the `Course` entity and registering the fields. Fields that can be queried must be **explicitly** defined.
 
 ```java
 public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Course> {
@@ -78,17 +78,17 @@ public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Cours
 
 **Attribute paths**
 
-A fiield attribute path must correspond directly to an attribute path in the object entity graph. Let's say we have an entity of `Course` with an associated collection on `Tag`. To query the tag name we would define the following:
+A field attribute path must correspond directly to an attribute path in the object entity graph. Let's say we have an entity of `Course` with an associated collection on `Tag`. To query the tag name we would define the following:
 
 ```java
 field("tags.name")
 ```
 
-Preql will automatically traverse the object graph and check if the attribute exists and throw an error if it doesn't. It will also automatically add a join to the `tags` table.
+Preql will traverse the object graph and check if the attribute exists and throw an error if it doesn't. It will also add a join to the `tags` table.
 
 **Avoiding duplicate joins**
 
-To avoid duplicate joins, Preql automatically keeps tracks of joins already added to the criteria.  For example, lets say we have defined two fields on an association:
+To avoid duplicate joins, Preql keeps tracks of joins already added to the criteria.  For example, lets say we have defined two fields on an association:
 
 ```java
 field("attachments.size"),
@@ -99,7 +99,7 @@ It will check if a join already exists for `attachments` on `course`. If it does
 
 **Aliasing fields**
 
-You can define an alias for the field. The alias can be anything but the attribute path (in this case `tags.name`) must correspond directly to a valid attribute path in the object entity graph.
+You can define an alias for a field. The alias can be anything but the attribute path (in this case `tags.name`) must correspond directly to a valid attribute path in the object entity graph.
 
 ```java
 // define the path attribute as tags.name with an alias of tags
@@ -297,7 +297,9 @@ import static java.lang.String.format;
 public class BooleanValueParser implements ValueParser<Boolean> {
 
     private static final String BOOLEAN_TYPE = "boolean";
-
+ 	private static final String TRUE_STR     = Boolean.TRUE.toString();
+    private static final String FALSE_STR    = Boolean.FALSE.toString();
+    
     @Override
     public Object[] getSupportedTypes() {
         return new Object[]{
@@ -310,19 +312,22 @@ public class BooleanValueParser implements ValueParser<Boolean> {
 
     @Override
     public Boolean parse(@NotNull final Object value) {
-        try {
+          try {
             if (value instanceof Boolean) {
                 return (Boolean) value;
             }
             final String v = value.toString();
-            if (v.trim().length() == 0) {
-                return false;
-            } else {
-                return parseBoolean(v);
+            if (v.trim().length() > 0) {
+                if (TRUE_STR.equalsIgnoreCase(v)) {
+                    return true;
+                } else if (FALSE_STR.equalsIgnoreCase(v)) {
+                    return false;
+                }
             }
         } catch (Exception exception) {
             throw new InvalidQueryException(format("Could not parse '%s' into a boolean", value));
         }
+        throw new InvalidQueryException(format("Could not parse '%s' into a boolean", value));
     }
 }
 ```
@@ -334,6 +339,8 @@ QueryParser.addValueParser(new BooleanValueParser());
 ```
 
 ### Expressions
+
+Preql supports the following expressions.
 
 **Expression matrix**
 
@@ -353,7 +360,7 @@ QueryParser.addValueParser(new BooleanValueParser());
 
 ### Example queries
 
-Here is a list of some example queries. You can find more examples, look at the in the [FilterQueryTest](https://github.com/ILLGrenoble/preql/blob/master/src/test/java/eu/ill/preql/FilterQueryTest.java) file in the tests directory.
+Here is a list of some example queries. You can find more examples, look at the [FilterQueryTest](https://github.com/ILLGrenoble/preql/blob/master/src/test/java/eu/ill/preql/FilterQueryTest.java) file in the tests directory.
 
 **Examples matrix**
 
