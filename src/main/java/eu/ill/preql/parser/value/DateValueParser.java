@@ -18,9 +18,12 @@ package eu.ill.preql.parser.value;
 import eu.ill.preql.exception.InvalidQueryException;
 import eu.ill.preql.parser.ValueParser;
 
-import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static java.lang.String.format;
 
@@ -31,8 +34,13 @@ import static java.lang.String.format;
  */
 public class DateValueParser implements ValueParser<Date> {
 
-    private static final String TYPE_DATE = "date";
+    private static final String                        TYPE_DATE = "date";
+    private static final Map<String, SimpleDateFormat> formats   = new HashMap<>();
 
+    static {
+        registerFormat("yyyy-MM-dd'T'HH:mm:ss");
+        registerFormat("yyyy-MM-dd");
+    }
 
     @Override
     public Object[] getSupportedTypes() {
@@ -43,17 +51,64 @@ public class DateValueParser implements ValueParser<Date> {
         };
     }
 
+    public static Map<String, SimpleDateFormat> getFormats() {
+        return formats;
+    }
+
+    /**
+     * Register a new date format pattern
+     *
+     * @param pattern the pattern to register
+     */
+    public static void registerFormat(final String pattern) {
+        final SimpleDateFormat format = new SimpleDateFormat(pattern);
+        format.setLenient(false);
+        formats.put(pattern, format);
+    }
+
+    /**
+     * Unregister a date format pattern
+     *
+     * @param pattern the pattern to unregister
+     */
+    public static void unregisterFormat(final String pattern) {
+        formats.remove(pattern);
+    }
+
+    /**
+     * Unregister all formats
+     */
+    public static void unregisterFormats() {
+        formats.clear();
+    }
+
+    /**
+     * Try to parse the given string into a data object
+     *
+     * @param value the string to parse
+     * @return a date object
+     */
+    private Date parseDate(final String value) {
+        for (Entry<String, SimpleDateFormat> entry : formats.entrySet()) {
+            final SimpleDateFormat format = entry.getValue();
+            try {
+                return new Date(format.parse(value).getTime());
+            } catch (ParseException pe) {
+                // keep trying other formats...
+            }
+        }
+        throw new InvalidQueryException(format("Could not parse '%s' into a date", value));
+    }
+
     @Override
     public Date parse(final Object value) {
         try {
-            // Value must be in the "yyyy-mm-dd" format
             if (value instanceof Date) {
                 return (Date) value;
             }
             final String v = value.toString();
             if (v.trim().length() > 0) {
-                final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                return dateFormat.parse(v);
+                return parseDate(v);
             }
         } catch (Exception exception) {
             throw new InvalidQueryException(format("Could not parse '%s' into a date", value));

@@ -19,8 +19,6 @@ import eu.ill.preql.exception.InvalidQueryException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Date;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -31,14 +29,29 @@ class DateValueParserTest {
     @Test
     @DisplayName("should successfully convert valid values")
     void valid() {
-        assertThat(parser.parse("2018-01-01T13:30:01")).isInstanceOf(Date.class);
+        assertThat(parser.parse("2018-01-01T13:30:01")).isEqualTo("2018-01-01T13:30:01.000");
+        assertThat(parser.parse("2018-01-01")).isEqualTo("2018-01-01T00:00:00.000");
+    }
+
+    @Test
+    @DisplayName("should successfully get all formats")
+    void getFormats() {
+        assertThat(DateValueParser.getFormats()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("should successfully register and unregister a new format")
+    void registerAndUnregisterFormat() {
+        DateValueParser.registerFormat("yyyy-MM");
+        assertThat(parser.parse("2018-06")).isEqualTo("2018-06-01T00:00:00.000");
+        DateValueParser.unregisterFormat("yyyy-MM");
+        assertThrows(InvalidQueryException.class, () -> parser.parse("2018-06"));
     }
 
     @Test
     @DisplayName("should fail to convert invalid values")
     void invalid() {
         assertThrows(InvalidQueryException.class, () -> parser.parse("hello"));
-        assertThrows(InvalidQueryException.class, () -> parser.parse("2018-01-01"));
         assertThrows(InvalidQueryException.class, () -> parser.parse(true));
         assertThrows(InvalidQueryException.class, () -> parser.parse(1.5));
         assertThrows(InvalidQueryException.class, () -> parser.parse(null));

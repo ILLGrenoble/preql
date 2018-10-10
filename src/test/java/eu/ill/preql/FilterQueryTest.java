@@ -59,37 +59,38 @@ public class FilterQueryTest {
     @DisplayName("should successfully execute valid queries")
     @DataSet("data.yml")
     void validQueries() {
-        Assertions.assertThat(execute("id = :id", of("id", 1))).hasSize(1);
-        Assertions.assertThat(execute("id IS NOT NULL")).hasSize(5);
-        Assertions.assertThat(execute("id IS NULL")).hasSize(0);
-        Assertions.assertThat(execute("code = :code", of("code", "C-JAVA"))).hasSize(1);
-        Assertions.assertThat(execute("description LIKE :description", of("description", "%discovering web%"))).hasSize(1);
-        Assertions.assertThat(execute("description NOT LIKE :description", of("description", "%discovering web%"))).hasSize(4);
-        Assertions.assertThat(execute("price <= :price", of("price", 100.00))).hasSize(2);
-        Assertions.assertThat(execute("price <= :price", of("price", "90GBP"))).hasSize(2);
-        Assertions.assertThat(execute("summary = :summary", of("summary", "Discovering web development"))).hasSize(1);
-        Assertions.assertThat(execute("duration = :duration", of("duration", "10HOURS"))).hasSize(2);
-        Assertions.assertThat(execute("duration <= :duration", of("duration", "45MINS"))).hasSize(1);
-        Assertions.assertThat(execute("credits < :credits", of("credits", 2000))).hasSize(2);
-        Assertions.assertThat(execute("credits <= :credits", of("credits", 2000))).hasSize(5);
-        Assertions.assertThat(execute("active = :active", of("active", false))).hasSize(1);
-        Assertions.assertThat(execute("id IN :ids", of("ids", ImmutableList.of(1, 2, 3, 4)))).hasSize(4);
-        Assertions.assertThat(execute("id NOT IN :ids", of("ids", ImmutableList.of(1, 2, 3, 4)))).hasSize(1);
-        Assertions.assertThat(execute("tags = :tags", of("tags", "programming"))).hasSize(1);
-        Assertions.assertThat(execute("tags IS NOT NULL")).hasSize(1);
-        Assertions.assertThat(execute("tags = :tags", of("tags", "computing"))).hasSize(1);
-        Assertions.assertThat(execute("tags IN :tags", of("tags", ImmutableList.of("computing", "programming")))).hasSize(1);
-        Assertions.assertThat(execute("teacher.name =  :name", of("name", "Jamie Hall"))).hasSize(2);
-        Assertions.assertThat(execute("teacher.name = :teacher1 or  teacher.name = :teacher2", of("teacher1", "Jamie Hall", "teacher2", "Joe Bloggs"))).hasSize(4);
-        Assertions.assertThat(execute("teacher.name = :name AND credits <= :credits", of("name", "Jamie Hall", "credits", 1000))).hasSize(1);
-        Assertions.assertThat(execute("teacher.age <= :age", of("age", 50))).hasSize(5);
-        Assertions.assertThat(execute("credits BETWEEN :lowerBound AND :upperBound", of("lowerBound", 1000, "upperBound", 10000))).hasSize(5);
-        Assertions.assertThat(execute("credits NOT BETWEEN :lowerBound AND :upperBound", of("lowerBound", 1000, "upperBound", 10000))).hasSize(0);
-        Assertions.assertThat(execute("attachments.size >= :size", of("size", "1MB"))).hasSize(1);
-        Assertions.assertThat(execute("attachments.size >= :size", of("size", 2000))).hasSize(1);
-        Assertions.assertThat(execute("attachments.name = :name", of("name", "1.pdf"))).hasSize(1);
-        Assertions.assertThat(execute("startDate >= :startDate", of("startDate", "2017-01-01T00:00:00"))).hasSize(5);
-        Assertions.assertThat(execute("startDate BETWEEN :startDate AND :endDate", of("startDate", "2017-01-01T00:00:00", "endDate", "2018-03-01T23:59:59"))).hasSize(3);
+        assertThat(execute("id = :id", of("id", 1))).hasSize(1);
+        assertThat(execute("id IS NOT NULL")).hasSize(5);
+        assertThat(execute("id IS NULL")).hasSize(0);
+        assertThat(execute("code = :code", of("code", "C-JAVA"))).hasSize(1);
+        assertThat(execute("description LIKE :description", of("description", "%discovering web%"))).hasSize(1);
+        assertThat(execute("description NOT LIKE :description", of("description", "%discovering web%"))).hasSize(4);
+        assertThat(execute("price <= :price", of("price", 100.00))).hasSize(2);
+        assertThat(execute("price <= :price", of("price", "90GBP"))).hasSize(2);
+        assertThat(execute("summary = :summary", of("summary", "Discovering web development"))).hasSize(1);
+        assertThat(execute("duration = :duration", of("duration", "10HOURS"))).hasSize(2);
+        assertThat(execute("duration <= :duration", of("duration", "45MINS"))).hasSize(1);
+        assertThat(execute("credits < :credits", of("credits", 2000))).hasSize(2);
+        assertThat(execute("credits <= :credits", of("credits", 2000))).hasSize(5);
+        assertThat(execute("active = :active", of("active", false))).hasSize(1);
+        assertThat(execute("id IN :ids", of("ids", ImmutableList.of(1, 2, 3, 4)))).hasSize(4);
+        assertThat(execute("id NOT IN :ids", of("ids", ImmutableList.of(1, 2, 3, 4)))).hasSize(1);
+        assertThat(execute("tags = :tags", of("tags", "programming"))).hasSize(1);
+        assertThat(execute("tags IS NOT NULL")).hasSize(1);
+        assertThat(execute("tags = :tags", of("tags", "computing"))).hasSize(1);
+        assertThat(execute("tags IN :tags", of("tags", ImmutableList.of("computing", "programming")))).hasSize(1);
+        assertThat(execute("teacher.name =  :name", of("name", "Jamie Hall"))).hasSize(2);
+        assertThat(execute("teacher.name = :teacher1 or  teacher.name = :teacher2", of("teacher1", "Jamie Hall", "teacher2", "Joe Bloggs"))).hasSize(4);
+        assertThat(execute("teacher.name = :name AND credits <= :credits", of("name", "Jamie Hall", "credits", 1000))).hasSize(1);
+        assertThat(execute("teacher.age <= :age", of("age", 50))).hasSize(5);
+        assertThat(execute("credits BETWEEN :lowerBound AND :upperBound", of("lowerBound", 1000, "upperBound", 10000))).hasSize(5);
+        assertThat(execute("credits NOT BETWEEN :lowerBound AND :upperBound", of("lowerBound", 1000, "upperBound", 10000))).hasSize(0);
+        assertThat(execute("attachments.size >= :size", of("size", "1MB"))).hasSize(1);
+        assertThat(execute("attachments.size >= :size", of("size", 2000))).hasSize(1);
+        assertThat(execute("attachments.name = :name", of("name", "1.pdf"))).hasSize(1);
+        assertThat(execute("startDate >= :startDate", of("startDate", "2017-01-01T00:00:00"))).hasSize(5);
+        assertThat(execute("startDate BETWEEN :startDate AND :endDate", of("startDate", "2017-01-01T00:00:00", "endDate", "2018-03-01T23:59:59"))).hasSize(3);
+        assertThat(execute("startDate BETWEEN :startDate AND :endDate", of("startDate", "2017-01-01", "endDate", "2018-03-01"))).hasSize(3);
     }
 
     @Test
@@ -136,7 +137,7 @@ public class FilterQueryTest {
     @DisplayName("should accept comments in the query")
     @DataSet("data.yml")
     void comments() {
-        Assertions.assertThat(execute("/** Get attachments by size */ attachments.size >= :size", of("size", 2000))).hasSize(1);
+        assertThat(execute("/** Get attachments by size */ attachments.size >= :size", of("size", 2000))).hasSize(1);
     }
 
     @Test
