@@ -15,12 +15,12 @@
  */
 package eu.ill.preql;
 
-import eu.ill.preql.support.Field;
-import eu.ill.preql.support.SimpleField;
 import eu.ill.preql.exception.InvalidQueryException;
-import eu.ill.preql.parser.FieldValueParser;
+import eu.ill.preql.parser.FieldParser;
 import eu.ill.preql.support.AttributeMapper;
+import eu.ill.preql.support.Field;
 import eu.ill.preql.support.OrderableField;
+import eu.ill.preql.support.SimpleField;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -96,7 +96,6 @@ public abstract class AbstractFilterQueryProvider<E> {
         return this;
     }
 
-
     /**
      * Create a new query for the given object type
      *
@@ -147,10 +146,10 @@ public abstract class AbstractFilterQueryProvider<E> {
      * Create a new simple field
      *
      * @param attribute   the name of the represented attribute
-     * @param valueParser the custom value parser for the field
+     * @param valueParser the custom parameter parser for the field
      * @return a new simple field
      */
-    public SimpleField field(final String attribute, final FieldValueParser<?> valueParser) {
+    public SimpleField field(final String attribute, final FieldParser<?> valueParser) {
         return field(attribute, attribute, valueParser);
     }
 
@@ -159,10 +158,10 @@ public abstract class AbstractFilterQueryProvider<E> {
      *
      * @param attribute   the name of the represented attribute
      * @param alias       the field alias
-     * @param valueParser the custom value parser for the field
+     * @param valueParser the custom parameter parser for the field
      * @return a new simple field
      */
-    public SimpleField field(final String attribute, final String alias, final FieldValueParser<?> valueParser) {
+    public SimpleField field(final String attribute, final String alias, final FieldParser<?> valueParser) {
         return new SimpleField(alias, mapper.get(attribute), valueParser);
     }
 
@@ -191,10 +190,10 @@ public abstract class AbstractFilterQueryProvider<E> {
      * Create a new orderable field
      *
      * @param attribute   the name of the represented attribute
-     * @param valueParser the custom value parser for the field
+     * @param valueParser the custom parameter parser for the field
      * @return a new orderable field
      */
-    public OrderableField orderableField(final String attribute, final FieldValueParser<?> valueParser) {
+    public OrderableField orderableField(final String attribute, final FieldParser<?> valueParser) {
         return orderableField(attribute, attribute, valueParser);
     }
 
@@ -203,10 +202,10 @@ public abstract class AbstractFilterQueryProvider<E> {
      *
      * @param attribute   the name of the represented attribute
      * @param alias       the field alias
-     * @param valueParser the custom value parser for the field
+     * @param valueParser the custom parameter parser for the field
      * @return a new orderable field
      */
-    public OrderableField orderableField(final String attribute, final String alias, final FieldValueParser<?> valueParser) {
+    public OrderableField orderableField(final String attribute, final String alias, final FieldParser<?> valueParser) {
         return new OrderableField(alias, mapper.get(attribute), valueParser);
     }
 

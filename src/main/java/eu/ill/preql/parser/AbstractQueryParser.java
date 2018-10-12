@@ -34,19 +34,19 @@ import static java.lang.String.format;
  * @author Jamie Hall
  */
 public abstract class AbstractQueryParser {
-    protected static final BaseErrorListener SYNTAX_ERROR_LISTENER = new BaseErrorListener() {
+    protected static final BaseErrorListener   SYNTAX_ERROR_LISTENER = new BaseErrorListener() {
         @Override
         public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e)
                 throws ParseCancellationException {
             throw new InvalidQueryException("Failed to parse query at line " + line + ":" + charPositionInLine + ": " + msg);
         }
     };
-    protected static int maxExpressions = -1;
-    protected final Map<String, Object> parameters;
-    protected final CriteriaBuilder criteriaBuilder;
-    protected final Map<String, Field> fields;
-    protected final List<Predicate> expressions;
-    protected final ValueParsers valueParsers;
+    protected final        Map<String, Object> parameters;
+    protected final        CriteriaBuilder     criteriaBuilder;
+    protected final        Map<String, Field>  fields;
+    protected final        List<Predicate>     expressions;
+    protected final        ParameterParsers    parsers;
+    protected final        Integer             maxExpressions;
 
     /**
      * Create a new instance
@@ -58,7 +58,8 @@ public abstract class AbstractQueryParser {
         this.fields = context.getFields();
         this.parameters = context.getParameters();
         this.expressions = context.getExpressions();
-        this.valueParsers = context.getValueParsers();
+        this.parsers = context.getParsers();
+        this.maxExpressions = context.getMaxExpressions();
     }
 
     /**
@@ -70,12 +71,12 @@ public abstract class AbstractQueryParser {
     public abstract Predicate[] parse(final String query);
 
     /**
-     * Parse a parameter value
+     * Parse a parameter
      *
      * @param field     The field
      * @param parameter The name of the parameter
      * @param value     The value of the parameter
-     * @return the parsed value
+     * @return the parsed parameter
      */
     public Object parseValue(final Field field, final String parameter, final Object value) {
         final Class<?> valueType = field.getAttribute().getJavaType();
@@ -83,18 +84,17 @@ public abstract class AbstractQueryParser {
             if (value == null) {
                 throw new InvalidQueryException("Parameter cannot be null");
             }
-            final FieldValueParser fieldValueParser = field.getValueParser();
-            if (fieldValueParser == null) {
-                final ValueParser<?> valueParser = valueParsers.getParser(valueType, value);
-                return valueParser.parse(value);
+            final FieldParser fieldParser = field.getValueParser();
+            if (fieldParser == null) {
+                final ParameterParser<?> parameterParser = parsers.getParser(valueType, value);
+                return parameterParser.parse(value);
             } else {
-                return fieldValueParser.parse(value);
+                return fieldParser.parse(value);
             }
 
         } catch (InvalidQueryException exception) {
             throw new InvalidQueryException(format("Error parsing parameter '%s'. %s.", parameter, exception.getMessage()));
         }
-
     }
 
     /**
@@ -104,7 +104,7 @@ public abstract class AbstractQueryParser {
      * @return a list of expressions
      */
     protected Predicate[] mergeExpressions(final List<Predicate> parsedExpressions) {
-        final List<Predicate> expressions = this.expressions;
+        final List<Predicate> expressions       = this.expressions;
         final List<Predicate> mergedExpressions = new ArrayList<>(expressions);
         if (parsedExpressions != null) {
             mergedExpressions.addAll(parsedExpressions);
@@ -127,7 +127,7 @@ public abstract class AbstractQueryParser {
      * Get a parameter
      *
      * @param name parameter name
-     * @return the parameter value
+     * @return the parameter
      */
     public Object getParameter(final String name) {
         if (parameters.containsKey(name)) {
@@ -145,17 +145,6 @@ public abstract class AbstractQueryParser {
         return maxExpressions;
     }
 
-    /**
-     * Set the maximum number of expressions than can be parsed
-     *
-     * @param max The max number of expressions
-     */
-    public static void setMaxExpressions(final int max) {
-        if (max < 0) {
-            throw new InvalidQueryException("Max expressions must be a positive number");
-        }
-        maxExpressions = max;
-    }
 
     /**
      * Get a field for a given name

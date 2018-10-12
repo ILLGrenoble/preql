@@ -51,7 +51,6 @@ public class Course extends AbstractTestEntity {
     @Embedded
     private CourseDetails details;
 
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "course_tag",
             joinColumns = @JoinColumn(name = "course_id"),

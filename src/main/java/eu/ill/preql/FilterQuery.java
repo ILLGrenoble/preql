@@ -16,12 +16,13 @@
 package eu.ill.preql;
 
 import eu.ill.preql.exception.InvalidQueryException;
+import eu.ill.preql.parser.ParameterParsers;
+import eu.ill.preql.parser.QueryParser;
+import eu.ill.preql.parser.QueryParserContext;
+import eu.ill.preql.support.ConstraintFunction;
 import eu.ill.preql.support.Field;
 import eu.ill.preql.support.OrderableField;
 import eu.ill.preql.support.Pagination;
-import eu.ill.preql.parser.QueryParser;
-import eu.ill.preql.parser.QueryParserContext;
-import eu.ill.preql.parser.ValueParsers;
 
 import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -32,7 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
@@ -44,17 +44,17 @@ import static java.lang.String.format;
  * @author Jamie Hall
  */
 public class FilterQuery<E> {
-    private final EntityManager entityManager;
-    private final CriteriaBuilder criteriaBuilder;
-    private final CriteriaQuery<E> criteria;
-    private final Root<E> root;
-    private final Map<String, Field> fields;
-    private final Map<String, Object> parameters = new HashMap<>();
-    private final String query;
-    private final List<Predicate> expressions = new ArrayList<>();
-    private final QueryParser parser;
-    private Pagination pagination = Pagination.DEFAULT;
-    private ValueParsers valueParsers = new ValueParsers();
+    private final EntityManager       entityManager;
+    private final CriteriaBuilder     criteriaBuilder;
+    private final CriteriaQuery<E>    criteria;
+    private final Root<E>             root;
+    private final Map<String, Field>  fields;
+    private final Map<String, Object> parameters       = new HashMap<>();
+    private final String              query;
+    private final List<Predicate>     constraints      = new ArrayList<>();
+    private final ParameterParsers    parameterParsers = new ParameterParsers();
+    private       Pagination          pagination       = Pagination.DEFAULT;
+    private       Integer             maxExpressions   = Integer.MAX_VALUE;
 
     public FilterQuery(
             final String query,
@@ -69,7 +69,6 @@ public class FilterQuery<E> {
         this.criteria = criteria;
         this.root = root;
         this.fields = fields;
-        this.parser = createParser();
     }
 
     /**
@@ -98,15 +97,19 @@ public class FilterQuery<E> {
     }
 
     /**
-     * Add a predefined expression to the query
-     * These expressions are added to the final query before being executed
+     * Add a constraint to the query
+     * These constraints are added to the final query before being executed
      *
-     * @param callback the expression callback
+     * @param function the constraint callback function
      * @return this
      */
-    public FilterQuery<E> addExpression(final BiFunction<CriteriaBuilder, Root<E>, Predicate> callback) {
-        final Predicate expression = callback.apply(criteriaBuilder, root);
-        expressions.add(expression);
+    public FilterQuery<E> addConstraint(final ConstraintFunction<E> function) {
+        final Predicate expression = function.apply(criteriaBuilder,
+                criteria,
+                root,
+                entityManager
+        );
+        constraints.add(expression);
         return this;
     }
 
@@ -116,12 +119,12 @@ public class FilterQuery<E> {
      * @return the typed query of long
      */
     private TypedQuery<Long> createCountQuery() {
-        final Predicate[] expressions = parser.parse(query);
-        final CriteriaQuery<Long> criteria = criteriaBuilder.createQuery(Long.class);
+        final QueryParser         parser      = createParser();
+        final Predicate[]         expressions = parser.parse(query);
+        final CriteriaQuery<Long> criteria    = criteriaBuilder.createQuery(Long.class);
         criteria.select(criteriaBuilder.count(criteria.from(root.getJavaType())))
                 .where(expressions)
                 .distinct(true);
-
         return entityManager.createQuery(criteria);
     }
 
@@ -131,6 +134,7 @@ public class FilterQuery<E> {
      * @return the typed query of <E>
      */
     private TypedQuery<E> createQuery() {
+        final QueryParser parser      = createParser();
         final Predicate[] expressions = parser.parse(query);
         criteria.where(expressions)
                 .distinct(true);
@@ -150,7 +154,7 @@ public class FilterQuery<E> {
      * @throws IllegalStateException        if called for a Java
      *                                      Persistence query language UPDATE or DELETE statement
      * @throws QueryTimeoutException        if the query execution exceeds
-     *                                      the query timeout value set and only the statement is
+     *                                      the query timeout parameter set and only the statement is
      *                                      rolled back
      * @throws TransactionRequiredException if a lock mode other than
      *                                      <code>NONE</code> has been set and there is no transaction
@@ -161,7 +165,7 @@ public class FilterQuery<E> {
      * @throws LockTimeoutException         if pessimistic locking
      *                                      fails and only the statement is rolled back
      * @throws PersistenceException         if the query execution exceeds
-     *                                      the query timeout value set and the transaction
+     *                                      the query timeout parameter set and the transaction
      *                                      is rolled back
      */
     public List<E> getResultList() {
@@ -180,7 +184,7 @@ public class FilterQuery<E> {
      * @throws IllegalStateException        if called for a Java
      *                                      Persistence query language UPDATE or DELETE statement
      * @throws QueryTimeoutException        if the query execution exceeds
-     *                                      the query timeout value set and only the statement is
+     *                                      the query timeout parameter set and only the statement is
      *                                      rolled back
      * @throws TransactionRequiredException if a lock mode other than
      *                                      <code>NONE</code> has been set and there is no transaction
@@ -190,7 +194,7 @@ public class FilterQuery<E> {
      * @throws LockTimeoutException         if pessimistic locking
      *                                      fails and only the statement is rolled back
      * @throws PersistenceException         if the query execution exceeds
-     *                                      the query timeout value set and the transaction
+     *                                      the query timeout parameter set and the transaction
      *                                      is rolled back
      */
     public Stream<E> getResultStream() {
@@ -207,7 +211,7 @@ public class FilterQuery<E> {
      * @throws IllegalStateException        if called for a Java
      *                                      Persistence query language UPDATE or DELETE statement
      * @throws QueryTimeoutException        if the query execution exceeds
-     *                                      the query timeout value set and only the statement is
+     *                                      the query timeout parameter set and only the statement is
      *                                      rolled back
      * @throws TransactionRequiredException if a lock mode other than
      *                                      <code>NONE</code> has been set and there is no transaction
@@ -218,7 +222,7 @@ public class FilterQuery<E> {
      * @throws LockTimeoutException         if pessimistic locking
      *                                      fails and only the statement is rolled back
      * @throws PersistenceException         if the query execution exceeds
-     *                                      the query timeout value set and the transaction
+     *                                      the query timeout parameter set and the transaction
      *                                      is rolled back
      */
     public E getSingleResult() {
@@ -284,14 +288,13 @@ public class FilterQuery<E> {
         return this;
     }
 
-
     /**
      * Get the query parser
      *
      * @return the query parser
      */
     public QueryParser getParser() {
-        return parser;
+        return createParser();
     }
 
     /**
@@ -300,8 +303,28 @@ public class FilterQuery<E> {
      * @return the query parser
      */
     private QueryParser createParser() {
-        final QueryParserContext context = new QueryParserContext(criteriaBuilder, fields, parameters, expressions, valueParsers);
+        final QueryParserContext context = new QueryParserContext(criteriaBuilder,
+                fields,
+                parameters,
+                constraints,
+                parameterParsers,
+                maxExpressions
+        );
         return new QueryParser(context);
+    }
+
+    /**
+     * Set the maximum number of expressions that can be parsed
+     *
+     * @param maxExpressions the maximum number of expressions
+     * @return this
+     */
+    public FilterQuery setMaxExpressions(final int maxExpressions) {
+        if (maxExpressions < 0) {
+            throw new InvalidQueryException("Max expressions must be a positive number");
+        }
+        this.maxExpressions = maxExpressions;
+        return this;
     }
 
 

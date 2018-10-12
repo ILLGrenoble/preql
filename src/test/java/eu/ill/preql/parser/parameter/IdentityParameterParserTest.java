@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.ill.preql.support;
+package eu.ill.preql.parser.parameter;
 
-import eu.ill.preql.parser.FieldParser;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
-import javax.persistence.criteria.Path;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Defines a field that can be ordered
- *
- * @author Jamie Hall
- */
-public class OrderableField extends SimpleField {
+@DisplayName("Identity parameter parser tests")
+class IdentityParameterParserTest {
+    private final IdentityParameterParser parser = new IdentityParameterParser();
 
-    public OrderableField(String name, final Path<?> attribute) {
-        super(name, attribute);
+    @Test
+    @DisplayName("should successfully convert valid values")
+    void valid() {
+        assertThat(parser.parse("hello")).isInstanceOf(String.class);
     }
 
-    public OrderableField(String name, final Path<?> attribute, FieldParser valueParser) {
-        super(name, attribute, valueParser);
-    }
 }

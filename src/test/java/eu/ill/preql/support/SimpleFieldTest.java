@@ -15,7 +15,7 @@
  */
 package eu.ill.preql.support;
 
-import eu.ill.preql.parser.FieldValueParser;
+import eu.ill.preql.parser.FieldParser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,8 +28,8 @@ import static org.mockito.Mockito.mock;
 @DisplayName("Simple field tests")
 class SimpleFieldTest {
 
-    private final Path                     attribute = mock(Path.class);
-    private final FieldValueParser<String> parser    = value -> "hello";
+    private final Path                attribute = mock(Path.class);
+    private final FieldParser<String> parser    = value -> "hello";
 
     @Test
     @DisplayName("should successfully create a new field instance")

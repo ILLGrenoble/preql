@@ -22,10 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import eu.ill.preql.builder.CourseFilterQueryProvider;
 import eu.ill.preql.domain.Course;
-import eu.ill.preql.support.FilterQueryHelper;
 import eu.ill.preql.exception.InvalidQueryException;
-import eu.ill.preql.parser.QueryParser;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +38,8 @@ import java.util.stream.Stream;
 import static com.github.database.rider.core.util.EntityManagerProvider.em;
 import static com.github.database.rider.core.util.EntityManagerProvider.instance;
 import static com.google.common.collect.ImmutableMap.of;
+import static eu.ill.preql.support.FilterQueryHelper.pagination;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -48,11 +47,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @RunWith(JUnitPlatform.class)
 @DisplayName("Filter query tests")
 public class FilterQueryTest {
-    private final Logger logger = LoggerFactory.getLogger(FilterQueryTest.class);
-    private ConnectionHolder connectionHolder = () -> instance("persistenceUnit").connection();
+    private final Logger           logger           = LoggerFactory.getLogger(FilterQueryTest.class);
+    private       ConnectionHolder connectionHolder = () -> instance("persistenceUnit").connection();
 
     private FilterQueryTest() {
-        QueryParser.setMaxExpressions(3);
     }
 
     @Test
@@ -124,7 +122,6 @@ public class FilterQueryTest {
         assertThrows(InvalidQueryException.class, () -> execute(
                 "name1 LIKE :name AND",
                 of("name", "Bob")));
-
     }
 
     @Test
@@ -174,7 +171,7 @@ public class FilterQueryTest {
     @DataSet("data.yml")
     void limitResults() {
         final FilterQuery<Course> query = createQuery();
-        query.setPagination((FilterQueryHelper.pagination(0, 1)));
+        query.setPagination((pagination(0, 1)));
         assertThat(query.getResultList()).isInstanceOf(List.class).hasSize(1);
     }
 
@@ -228,9 +225,9 @@ public class FilterQueryTest {
     private FilterQuery<Course> createQuery(final String preql, final Map<String, Object> parameters) {
 
         final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
-        final FilterQuery<Course> query = provider.createQuery(preql);
+        final FilterQuery<Course>       query    = provider.createQuery(preql);
         query.setParameters(parameters)
-                .setPagination(FilterQueryHelper.pagination(0, 100));
+                .setPagination(pagination(0, 100));
         return query;
     }
 
@@ -244,10 +241,13 @@ public class FilterQueryTest {
 
     private List<Course> execute(final String preql, final Map<String, Object> parameters) {
         final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
-        final FilterQuery<Course> query = provider.createQuery(preql);
+        final FilterQuery<Course>       query    = provider.createQuery(preql);
         query.setParameters(parameters)
-                .addExpression((cb, root) -> cb.equal(root.get("tenant").get("id"), 1))
-                .setPagination(FilterQueryHelper.pagination(0, 100));
+                .addConstraint((cb, criteria, root, em) -> {
+                    return root.get("tenant").get("name").in(asList("Tenant 1", "Tenant2"));
+                })
+                .setMaxExpressions(3)
+                .setPagination(pagination(0, 100));
         return query.getResultList();
     }
 

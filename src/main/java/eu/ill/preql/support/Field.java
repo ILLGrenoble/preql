@@ -15,7 +15,7 @@
  */
 package eu.ill.preql.support;
 
-import eu.ill.preql.parser.FieldValueParser;
+import eu.ill.preql.parser.FieldParser;
 
 import javax.persistence.criteria.Path;
 
@@ -41,9 +41,9 @@ public interface Field {
     Path<?> getAttribute();
 
     /**
-     * A custom value parser for the field
+     * A custom parameter parser for the field
      *
-     * @return the value parser
+     * @return the parameter parser
      */
-    FieldValueParser getValueParser();
+    FieldParser getValueParser();
 }

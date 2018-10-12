@@ -28,10 +28,6 @@ The minimum JDK required is 8.
 
 https://illgrenoble.github.io/preql
 
-### Example
-
-A Spring Boot integration example is coming soon.
-
 ### Getting started
 
 **Defining a filter query provider for an entity**
@@ -41,7 +37,7 @@ Before you can start filtering a collection, you must first define a filter quer
 There are two types of fields that can be defined:
 
  -	`field` A field that can be queried but cannot be ordered (useful if you don't want to order on a sub collection)
- -	`orderableField` A field that can be both queried and ordered by
+ -	`orderableField` A field that can be both queried and ordered
 
 In the code below, we are defining a provider for the `Course` entity and registering the fields. Fields that can be queried must be **explicitly** defined.
 
@@ -56,9 +52,9 @@ public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Cours
                 orderableField("code"),
                 orderableField("active"),
                 orderableField("credits"),
-            	// a custom field value parser for the price field
+            	parameter
                 orderableField("price", new CurrencyFieldValueParser()),
-                // a custom field value parser for the duration field
+                parameter
                 orderableField("duration", new DurationFieldValueParser()),
                 orderableField("startDate"),
                 orderableField("endDate"),
@@ -67,7 +63,6 @@ public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Cours
             	// fields that belongs to the teacher association
                 field("teacher.name"),
                 field("teacher.age"),
-                field("teacher.affiliation.name"),
             	// fields that belong to the attachments association
                 field("attachments.size", new ByteFieldValueParser()),
                 field("attachments.name")
@@ -108,9 +103,253 @@ orderableField("tags.name", "tags")
 
 This would allow the user to do `tags IN :tags` instead of `tags.name IN :tags` when querying the collection.
 
-**Custom field value parsers**
 
-A custom field value parser can be added for a field. 
+**Creating the query**
+
+```java
+/* 
+	Pass the entity manager to the factory. 
+	Normally you'd use guice or spring injection to instantiate the object
+*/
+final CourseQueryProvider provider = new CourseQueryProvider(em());
+
+// Create a new query
+final String preql = "tags = :tags AND active = :active";
+final FilterQuery<Course> query = provider.createQuery(preql);
+```
+
+**Pagination**
+
+An offset and limit can also be defined by calling the `setPagination` method on the query and passing in a `Pagination` object. The pagination objects accepts an `offset` and `limit`.
+
+Filter the results with an `offset` of *0* and a limit of *100*.
+
+```
+// the pagination function is a just a helper function
+query.setPagination(pagination(0, 100));
+// you could also do
+query.setPagination(new Pagination(0, 100));
+```
+
+**Parameters**
+
+Given the query of `tags IN :tags AND active = :tags` 
+
+To bind the parameters to this query, we would do:
+
+```java
+query.setParameter("active", true)
+     .setParameter("tags", asList("computing", "mathematics"))
+// you could also pass in a map
+Map<String, Object> parameters = new HashMap<String, Object>() {{
+    put("active", true);
+    put("tags", asList("computing", "mathematics"));
+}};
+query.setParameters(parameters);
+```
+
+**Ordering the results**
+
+You can order the results by calling the `setOrder` method on the query. Only fields that have been defined as `orderable` can be ordered, otherwise an exception will be thrown.
+
+```java
+query.setOrder("id", "desc");
+```
+
+**Constraints**
+
+Constraints are useful if you want to filter a collection based on an condition **not** provided by the user. For example, let's say a user can only see courses for their given organisation (tenant).  The `addConstraint` method on the query object provides a callback with the parameters of `criteriaBuilder`, `criteria`, `root` (and in our case the `Course` entity) and the`entityManager`.
+
+```java
+final String tenantId = 1;
+query.addConstraint(
+    (criteriaBuilder, criteria, root, entityManager) -> {
+     return criteriaBuilder.equal(root.get("tenant").get("id"), tenantId);
+    }
+);
+```
+
+**Complex constraints**
+
+You can also define complex constraints. Let's say you want to define a sub-query. There are two ways:
+
+- Build the sub-query using the criteria builder (more verbose, but only one query when executed)
+- Build the sub-query using JPQL directly (two queries are executed but it's easier to read).
+
+The example below creates a sub-query for selecting all ids from the tenant table where the tenant name is either *Tenant 1* or *Tenant 2*
+
+Criteria builder:
+
+```java
+query.addConstraint((cb, criteria, root, entityManager) -> {
+    final Subquery<Long> subquery   = criteria.subquery(Long.class);
+    final Root<Tenant>   tenantRoot = subquery.from(Tenant.class);
+    subquery.from(Tenant.class);
+    subquery.where(tenantRoot.get("name").in(asList("Tenant 1", "Tenant 2")));
+    subquery.select(tenantRoot.get("id"));
+    return root.get("tenant").get("id").in(subquery);
+});
+```
+
+JPQL:
+
+```java
+query.addConstraint((cb, criteria, root, entityManager) -> {
+    final String jpql = "SELECT t.id FROM Tenant t WHERE t.name IN (:name)";
+    final Query tenantQuery = entityManager.createQuery(jpql);
+    tenantQuery.setParameter("name", asList("Tenant 1", "Tenant2"));
+    final Collection identifiers = tenantQuery.getResultList();
+    return root.get("tenant").get("id").in(identifiers);
+});
+```
+
+The above example is just for demo purposes. For the above query, you would probably do:
+
+```java
+query.addConstraint((cb, criteria, root, entityManager) -> {
+    return root.get("tenant").get("name").in(asList("Tenant 1", "Tenant2"));
+});
+```
+
+**Limiting the number of expressions**
+
+You can limit the number of expressions that are defined by calling the `setMaxExpresions(n)` method. By default, there is no limit, so we recommend to set it.
+
+```java
+query.setMaxExpressions(10);
+```
+
+**Executing the query**
+
+Let's put all of this together. What we want:
+
+ - Find all courses that are *active* and have a tag of *computing* or *mathematics*
+ - Paginate the results with an offset of *10* and a limit of *100*
+ - Order the results by the *course name* in *ascending order*
+ - Filter the courses by a *tenant id*
+ - Return a list of all courses that matches the above criteria
+
+```java
+final CourseQueryProvider provider = new CourseQueryProvider(em());
+final FilterQuery<Course> query = provider.createQuery("tags IN :tags AND active = :active");
+query.setParameter("tags", asList("computing", "mathematics"))
+     .setParameter("active", true)
+	 .addConstraint((cb, criteria, root, entityManager) ->
+      	cb.equal(root.get("tenant").get("id"), 1)
+      )
+     .setPagination(pagination(10, 100))
+     .setOrder("name", "asc");
+// Get the results
+return query.getResultList();
+```
+
+> Use `getSingleResult` for a single result,  `getResultStream` for a stream or `count` to count the number of records.
+
+For a complete example, please check out the tests.
+
+### Parameter parsers
+
+Parameters parsers are used to parse a parameter value to the corresponding fields attribute type. 
+
+**Example**
+
+The entity `Course` has a property (attribute) of `credits` with a type of `Integer`.
+
+For the given query:
+
+```java
+final CourseQueryProvider provider = new CourseQueryProvider(em());
+final FilterQuery<Course> query = provider.createQuery("credits >= :credits");
+query.setParameter("credits", "200")
+return query.getResultList();
+```
+
+When the query is being parsed, it will look up to see what the property type is of the parameter being queried. In this example:  `:credits` 
+
+It will try to coerce the parameter value into the property type.  Even though, we have given the parameter value as a string, it will try to convert that string into an `Integer`. An exception will be thrown If the parameter cannot be converted into the property type.
+
+**Parameter parsers out of the box matrix**
+
+| Parameter parser          | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| BigDecimalParameterParser | Convert an object value into a big decimal       |
+| BooleanParameterParser    | Convert an object value into a boolean           |
+| ByteParameterParser       | Convert an object value into a byte decimal      |
+| CharacterParameterParser  | Convert an object value into a character decimal |
+| DateParameterParser       | Convert an object value into a date object (more information below) |
+| DoubleParameterParser     | Convert an object value into a double            |
+| FloatParameterParser      | Convert an object value into a float             |
+| IdentityParameterParser   | Returns the value as-is (no conversion)          |
+| IntegerParameterParser    | Convert an object value into an integer          |
+| LongParameterParser       | Convert an object value into a long              |
+| ShortParameterParser      | Convert an object value into a short             |
+| StringParameterParser     | Convert an object value into a string            |
+| UUIDParameterParser       | Convert an object value into a UUID              |
+
+**Date parsing**
+
+The date parser accepts the two following formats:
+
+- `yyyy-MM-dd'T'HH:mm:ss`
+- `yyyy-MM-dd`
+
+A custom format can be added by calling:
+
+```java
+DateValueParser.registerFormat(format) // for example YYYY
+```
+
+**Defining a custom parameter parser** 
+
+This parameter parser will convert a given object into a UUID (this parameter parser already exists, just for demo purposes). 
+
+```java
+/**
+ * Convert an object into a UUID
+ */
+public class UUIDValueParser implements ValueParser<UUID> {
+
+    private static final String TYPE_UUID = "uuid";
+
+    @Override
+    public Object[] getSupportedTypes() {
+        return new Object[]{
+                UUID.class,
+                UUID.class.getName(),
+                TYPE_UUID
+        };
+    }
+
+    @Override
+    public UUID parse(final Object value) {
+        try {
+            if (value instanceof UUID) {
+                return (UUID) value;
+            }
+            final String v = value.toString();
+            if (v.trim().length() > 0) {
+                return fromString(v);
+            }
+        } catch (Exception exception) {
+            throw new InvalidQueryException(format("Could not parse '%s' into a UUID", value));
+        }
+        throw new InvalidQueryException(format("Could not parse '%s' into a UUID", value));
+    }
+}
+
+```
+
+Register it
+
+```java
+ParameterParsers.registerParser(new UUIDValueParser());
+```
+
+Now any property that has a type of `UUID` will be coerced using this parser.
+
+### Custom field parsers
+
+A custom field value parser can be added to any field. 
 
 Here is an example that converts a currency expression into US dollars (i.e. 1GBP, 2EUR etc.)
 
@@ -118,26 +357,26 @@ Here is an example that converts a currency expression into US dollars (i.e. 1GB
 /**
  * Convert EUR or GBP into dollars
  */
-public class CurrencyFieldValueParser implements FieldValueParser<Double> {
+public class CurrencyFieldParser implements FieldParser<Double> {
 	/**
-	 * For demo purposes, we are explicility defining the conversion rates
+	 * For demo purposes, we are explicitly defining the conversion rates
 	 * In a real world application, this would be dynamic.
 	 */
     private final static double EUR_RATE = 1.12;
     private final static double GBP_RATE = 1.30;
 
     /**
-     * If we cannot convert, then fallback to this value parser
+     *parameter
      */
     private ValueParser<Double> fallbackValueParser = new DoubleValueParser();
 
     @Override
     public Double parse(final Object value) {
         if (value instanceof String) {
-            final Pattern pattern = compile("^(?<value>\\d+.\\d{0,2})(?<currency>GBP|EUR)$");
+            final Pattern pattern = compile(parameter);
             final Matcher matcher = pattern.matcher((String) value);
             if (matcher.matches()) {
-                double ret = parseDouble(matcher.group("value"));
+                double ret = parseDouble(matcher.group(parameter));
                 switch (matcher.group("currency")) {
                     case "GBP":
                         return ret * GBP_RATE;
@@ -155,187 +394,7 @@ public class CurrencyFieldValueParser implements FieldValueParser<Double> {
 Associate it to the field in the provider
 
 ```java
-field("price", new CurrencyFieldValueParser())
-```
-
-**Creating the query**
-
-```java
-// Pass the entity manager to the factory. Normally you'd use guice or spring injection to instantiate the object
-final CourseQueryProvider provider = new CourseQueryProvider(em());
-
-// Create a new query
-final FilterQuery<Course> query = provider.createQuery("tags = :tags AND active = :active");
-```
-
-**Pagination**
-
-An offset and limit can also be defined by calling the `setPagination` method on the query and passing in a `Pagination` object.
-
-```
-// the pagination function is a just a helper function
-query.setPagination(pagination(0, 100));
-// you could also do
-query.setPagination(new Pagination(0, 100));
-```
-
-**Parameters**
-
-Given the query of `tags = :tags AND active = :tags` 
-
-To bind the parameters to this query, we would do:
-
-```java
-query.setParameter("active", true)
-     .setParameter("tags", "computing")
- // you could also pass in a map
- Map<String, Object> parameters = new HashMap<String, Object>() {{
-    put("active", true);
-    put("tags", "computing");
-}};
-query.setParameters(parameters);
-```
-
-**Ordering the results**
-
-You can order the results by calling the `setOrder` method on the query. Only fields that have been defined as `orderable` can be ordered, otherwise an exception will be thrown.
-
-```java
-query.setOrder("id", "desc");
-```
-
-**Predefined expressions**
-
-Predefined expressions are useful if you want to supplementaly filter a collection based on an expression **not** provided by the user. For example, let's say a user can only see courses for their given organisation (tenant).  The `addExpressions` method on the query object provides a callback with the parameters of `criteriaBuilder` and the `root` object (in our case, the `Course` entity)
-
-```java
-query.addExpression(
-    (criteriaBuilder, root) -> criteriaBuilder.equal(root.get("tenant").get("id"), 1)
-)
-```
-
-This expression will be added to the query after the query has been parsed.
-
-**Executing the query**
-
-Let's put all of this together. What we want:
-
- - Find all courses that are *active* and have a tag of *computing*
- - Paginate the results with an offset of *10* and a limit of *100*
- - Order the results by the *course name* in *ascending order*
- - Filter the courses by a *tenant id*
- - Return a list of all courses that matches the above criteria
-
-```java
-final CourseQueryProvider provider = new CourseQueryProvider(em());
-final FilterQuery<Course> query = provider.createQuery("tags = :tags AND active = :active");
-query.setParameter("tags", "*computing*")
-     .setParameter("active", true)
-     .addExpression((criteriaBuilder, root) ->
-    	criteriaBuilder.equal(root.get("tenant").get("id"), 1)
-	  )
-     .setPagination(pagination(10, 100))
-     .setParameter("tags", "computing")
-     .setOrder("name", "asc");
-// Get the results
-return query.getResultList();
-```
-
-> Use `getSingleResult` for a single result or `count`, `getResultStream` for a stream or `count` to count the number of records.
-
-For a complete example, please check out the tests.
-
-**Limiting the number of expressions**
-
-You can limit the number of expressions that are defined by calling the `setMaxExpresions(n)` method. By default, there is no limit, so we recommend to set it.
-
-```java
-QueryParser.setMaxExpressions(10);
-```
-
-### Value parsers
-
-Value parsers are used to parse a parameter value to the corresponding fields attribute object type.  For example, if your entity has an attribute of `credits` with a type of `Long` then when the query is parsed, it will try to convert the given parameter value into a `Long`. An exception will be thrown if the parameter cannot be converted to match the attribute type.
-
-**Value parsers out of the box matrix**
-
-| Value parser          | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| BigDecimalValueParser | Convert an object value into a big decimal       |
-| BooleanValueParser    | Convert an object value into a boolean           |
-| ByteValueParser       | Convert an object value into a byte decimal      |
-| CharacterValueParser  | Convert an object value into a character decimal |
-| DateValueParser       | Convert an object value into a date object       |
-| DoubleValueParser     | Convert an object value into a double            |
-| FloatValueParser      | Convert an object value into a float             |
-| IdentityValueParser   | Returns the value as-is (no conversion)          |
-| IntegerValueParser    | Convert an object value into an integer          |
-| LongValueParser       | Convert an object value into a long              |
-| ShortValueParser      | Convert an object value into a short             |
-| StringValueParser     | Convert an object value into a string            |
-| UUIDValueParser       | Convert an object value into a UUID              |
-
-**Registering a value parser globally**
-
-You can, for example, on application startup, register a value parser to be used in all instances of `FilterQuery`.
-
-```java
-FilterQuery.addValueParser(new LongValueParser());
-```
-
-**Defining a custom value parser** 
-
-This value parser will convert a given object to a boolean (this value parser already exists, just for demo purposes).
-
-```java
-import InvalidQueryException;
-import org.jetbrains.annotations.NotNull;
-
-import static java.lang.Boolean.parseBoolean;
-import static java.lang.String.format;
-
-public class BooleanValueParser implements ValueParser<Boolean> {
-
-    private static final String BOOLEAN_TYPE = "boolean";
- 	private static final String TRUE_STR     = Boolean.TRUE.toString();
-    private static final String FALSE_STR    = Boolean.FALSE.toString();
-    
-    @Override
-    public Object[] getSupportedTypes() {
-        return new Object[]{
-                Boolean.class,
-                Boolean.TYPE,
-                Boolean.class.getName(),
-                BOOLEAN_TYPE
-        };
-    }
-
-    @Override
-    public Boolean parse(@NotNull final Object value) {
-          try {
-            if (value instanceof Boolean) {
-                return (Boolean) value;
-            }
-            final String v = value.toString();
-            if (v.trim().length() > 0) {
-                if (TRUE_STR.equalsIgnoreCase(v)) {
-                    return true;
-                } else if (FALSE_STR.equalsIgnoreCase(v)) {
-                    return false;
-                }
-            }
-        } catch (Exception exception) {
-            throw new InvalidQueryException(format("Could not parse '%s' into a boolean", value));
-        }
-        throw new InvalidQueryException(format("Could not parse '%s' into a boolean", value));
-    }
-}
-```
-
-Register it
-
-```
-QueryParser.addValueParser(new BooleanValueParser());
+field("price", new CurrencyFieldParser())
 ```
 
 ### Expressions
@@ -364,35 +423,35 @@ Here is a list of some example queries. You can find more examples, look at the 
 
 **Examples matrix**
 
-| Query                                                   | Parameters                                      |
-| ------------------------------------------------------- | ----------------------------------------------- |
-| `id = :id`                                              | id: 1                                           |
-| `id IS NOT NULL`                                        |                                                 |
-| `id IS NULL`                                            |                                                 |
-| `code = :code`                                          | code: "C-JAVA"                                  |
-| `description LIKE :description`                         | description: "%discovering web%                 |
-| `description NOT LIKE :description`                     | description: "%discovering web%                 |
-| `price <= :price`                                       | price: 100.00                                   |
-| `price <= :price`                                       | price: "90GBP"                                  |
-| `duration = :duration`                                  | duration: "10HOURS"                             |
-| `credits < :credits`                                    | credits: 1000                                   |
-| `active = :active`                                      | active: false                                   |
-| `id IN :ids`                                            | ids: [1,2,3,4]                                  |
-| `id NOT IN :ids`                                        | ids: [1,2,3,4]                                  |
-| `tags = :tags`                                          | tags: "programming"                             |
-| `tags IN :tags`                                         | tags: ["programming", "computing"]              |
-| `teacher.name = :teacher1 or  teacher.name = :teacher2` | teacher1: "Jamie Hall",  teacher2: "Joe Bloggs" |
-| `credits BETWEEN :lowerBound AND :upperBound`           | lowerBound: 1000, upperBound: 10000             |
-| `credits NOT BETWEEN :lowerBound AND :upperBound`       | lowerBound: 1000, upperBound: 10000             |
-| `attachments.size >= :size`                             | size: "1MB"                                     |
-| `attachments.size >= :size`                             | size: 2000                                      |
-| `attachments.name LIKE :name AND size >= :size`         | name: "%.jpg", size: "10MB"                     |
-| `startDate >= :startDate`                               | startDate: "2017-01-01"                         |
-| `startDate BETWEEN :startDate AND :endDate`             | startDate: "2018-01-01", endDate: "2018-03-01"  |
+| Query                                                       | Parameters                                      |
+| ----------------------------------------------------------- | ----------------------------------------------- |
+| `id = :id`                                                  | id: 1                                           |
+| `id IS NOT NULL`                                            |                                                 |
+| `id IS NULL`                                                |                                                 |
+| `code = :code`                                              | code: "C-JAVA"                                  |
+| `description LIKE :description`                             | description: "%discovering web%                 |
+| `description NOT LIKE :description`                         | description: "%discovering web%                 |
+| `price <= :price`                                           | price: 100.00                                   |
+| `price <= :price`                                           | price: "90GBP"                                  |
+| `duration = :duration`                                      | duration: "10HOURS"                             |
+| `credits < :credits`                                        | credits: 1000                                   |
+| `active = :active`                                          | active: false                                   |
+| `id IN :ids`                                                | ids: [1,2,3,4]                                  |
+| `id NOT IN :ids`                                            | ids: [1,2,3,4]                                  |
+| `tags = :tags`                                              | tags: "programming"                             |
+| `tags IN :tags`                                             | tags: ["programming", "computing"]              |
+| `teacher.name = :teacher1 or  teacher.name = :teacher2`     | teacher1: "Jamie Hall",  teacher2: "Joe Bloggs" |
+| `credits BETWEEN :lowerBound AND :upperBound`               | lowerBound: 1000, upperBound: 10000             |
+| `credits NOT BETWEEN :lowerBound AND :upperBound`           | lowerBound: 1000, upperBound: 10000             |
+| `attachments.size >= :size`                                 | size: "1MB"                                     |
+| `attachments.size >= :size`                                 | size: 2000                                      |
+| `attachments.name LIKE :name AND attachments.size >= :size` | name: "%.jpg", size: "10MB"                     |
+| `startDate >= :startDate`                                   | startDate: "2017-01-01"                         |
+| `startDate BETWEEN :startDate AND :endDate`                 | startDate: "2018-01-01", endDate: "2018-03-01"  |
 
 ### Use case
 
-We wanted to give users the ability to filter graphql collections using an expressive syntax.
+We wanted to give users the ability to filter [graphql](https://graphql.org/) collections using an expressive syntax.
 
 ```
 query {
@@ -420,5 +479,5 @@ query {
 
 **Tests**
 
-The tests are written in Junit 5
+The tests are written in Junit 5.
 

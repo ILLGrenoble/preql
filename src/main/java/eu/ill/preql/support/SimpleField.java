@@ -15,7 +15,7 @@
  */
 package eu.ill.preql.support;
 
-import eu.ill.preql.parser.FieldValueParser;
+import eu.ill.preql.parser.FieldParser;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -32,9 +32,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class SimpleField implements Field {
 
-    private String           name;
-    private Path<?>          attribute;
-    private FieldValueParser valueParser = null;
+    private String      name;
+    private Path<?>     attribute;
+    private FieldParser valueParser = null;
 
     /**
      * Create a new field
@@ -54,9 +54,9 @@ public class SimpleField implements Field {
      *
      * @param name        - the name of the field
      * @param attribute   - attribute to the field
-     * @param valueParser - a custom value parser for the field
+     * @param valueParser - a custom parameter parser for the field
      */
-    public SimpleField(final String name, final Path<?> attribute, final FieldValueParser valueParser) {
+    public SimpleField(final String name, final Path<?> attribute, final FieldParser valueParser) {
         this(name, attribute);
         this.valueParser = valueParser;
     }
@@ -72,7 +72,7 @@ public class SimpleField implements Field {
     }
 
     @Override
-    public FieldValueParser getValueParser() {
+    public FieldParser getValueParser() {
         return valueParser;
     }
 

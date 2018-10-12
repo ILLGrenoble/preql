@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.ill.preql.support;
-
-import eu.ill.preql.parser.FieldParser;
-
-import javax.persistence.criteria.Path;
+package eu.ill.preql.parser;
 
 /**
- * Defines a field that can be ordered
+ * Represents a parser for coercing an object into a specified type
  *
+ * @param <T> the type to be coerced into
  * @author Jamie Hall
  */
-public class OrderableField extends SimpleField {
+public interface ParameterParser<T> {
+    /**
+     * Get the types supported by this parameter parser
+     *
+     * @return the supported types
+     */
+    Object[] getSupportedTypes();
 
-    public OrderableField(String name, final Path<?> attribute) {
-        super(name, attribute);
-    }
-
-    public OrderableField(String name, final Path<?> attribute, FieldParser valueParser) {
-        super(name, attribute, valueParser);
-    }
+    /**
+     * Coerce an object into the generic type
+     *
+     * @param value the parameter to convert
+     * @return the converted parameter
+     */
+    T parse(Object value);
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.ill.preql.support;
+package eu.ill.preql.parser.parameter;
 
 import eu.ill.preql.exception.InvalidQueryException;
 import org.junit.jupiter.api.DisplayName;
@@ -22,28 +22,24 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@DisplayName("Pagination tests")
-class PaginationTest {
+@DisplayName("Float parameter parser tests")
+class FloatParameterParserTest {
+    private final FloatParameterParser parser = new FloatParameterParser();
 
     @Test
-    @DisplayName("should throw an illegal argument because limit is a negative")
-    void limitIsNegative() {
-        assertThrows(InvalidQueryException.class, () -> new Pagination(0, -1), "Limit must be a positive parameter");
+    @DisplayName("should successfully convert valid values")
+    void valid() {
+        assertThat(parser.parse(1L)).isInstanceOf(Float.class);
+        assertThat(parser.parse(1)).isInstanceOf(Float.class);
+        assertThat(parser.parse(1.5)).isInstanceOf(Float.class);
+        assertThat(parser.parse("1.0")).isInstanceOf(Float.class);
     }
 
     @Test
-    @DisplayName("should throw an illegal argument because offset is negative")
-    void offsetIsNegative() {
-        assertThrows(InvalidQueryException.class, () -> new Pagination(-100, 0), "Offset must be a positive parameter");
+    @DisplayName("should fail to convert invalid values")
+    void invalid() {
+        assertThrows(InvalidQueryException.class, () -> parser.parse("hello"));
+        assertThrows(InvalidQueryException.class, () -> parser.parse(true));
+        assertThrows(InvalidQueryException.class, () -> parser.parse(null));
     }
-
-    @Test
-    @DisplayName("should create a default instance")
-    void defaultInstance() {
-        assertThat(Pagination.DEFAULT)
-                .isInstanceOf(Pagination.class)
-                .hasFieldOrPropertyWithValue("NO_ROW_OFFSET", 0)
-                .hasFieldOrPropertyWithValue("NO_ROW_LIMIT", Integer.MAX_VALUE);
-    }
-
 }

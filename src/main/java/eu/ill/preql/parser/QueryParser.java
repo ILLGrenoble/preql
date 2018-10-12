@@ -55,12 +55,12 @@ public class QueryParser extends AbstractQueryParser {
                 return mergeExpressions();
             }
 
-            final CharStream stream = createStream(preql);
-            final FilterLexer lexer = createLexer(stream);
-            final FilterParser parser = createParser(new CommonTokenStream(lexer));
+            final CharStream                stream       = createStream(preql);
+            final FilterLexer               lexer        = createLexer(stream);
+            final FilterParser              parser       = createParser(new CommonTokenStream(lexer));
             final FilterParser.QueryContext queryContext = parser.query();
-            final ParseTreeWalker walker = new ParseTreeWalker();
-            final QueryListener listener = new QueryListener(this);
+            final ParseTreeWalker           walker       = new ParseTreeWalker();
+            final QueryListener             listener     = new QueryListener(this);
 
             walker.walk(listener, queryContext);
 

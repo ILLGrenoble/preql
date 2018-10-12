@@ -25,9 +25,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public final class Pagination {
 
-    public static final int NO_ROW_OFFSET = 0;
-    public static final int NO_ROW_LIMIT = Integer.MAX_VALUE;
-    public static final Pagination DEFAULT = new Pagination();
+    public static final int        NO_ROW_OFFSET = 0;
+    public static final int        NO_ROW_LIMIT  = Integer.MAX_VALUE;
+    public static final Pagination DEFAULT       = new Pagination();
 
     private final int offset;
     private final int limit;
@@ -45,10 +45,10 @@ public final class Pagination {
      */
     public Pagination(int offset, int limit) {
         if (offset < 0) {
-            throw new InvalidQueryException("Limit must be a positive value");
+            throw new InvalidQueryException("Limit must be a positive parameter");
         }
         if (limit < 0) {
-            throw new InvalidQueryException("Limit must be a positive value");
+            throw new InvalidQueryException("Limit must be a positive parameter");
         }
         this.offset = offset;
         this.limit = limit;

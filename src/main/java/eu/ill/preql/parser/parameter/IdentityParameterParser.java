@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.ill.preql.support;
+package eu.ill.preql.parser.parameter;
 
-import eu.ill.preql.parser.FieldParser;
-
-import javax.persistence.criteria.Path;
+import eu.ill.preql.parser.ParameterParser;
 
 /**
- * Defines a field that can be ordered
+ * Returns the parameter as-is (no conversion)
  *
  * @author Jamie Hall
  */
-public class OrderableField extends SimpleField {
+public class IdentityParameterParser implements ParameterParser<Object> {
 
-    public OrderableField(String name, final Path<?> attribute) {
-        super(name, attribute);
+
+    @Override
+    public Object[] getSupportedTypes() {
+        return new Object[]{};
     }
 
-    public OrderableField(String name, final Path<?> attribute, FieldParser valueParser) {
-        super(name, attribute, valueParser);
+    @Override
+    public Object parse(Object value) {
+        return value;
     }
 }

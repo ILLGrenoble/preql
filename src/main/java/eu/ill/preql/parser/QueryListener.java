@@ -56,7 +56,7 @@ public class QueryListener extends FilterBaseListener {
     @SuppressWarnings("unchecked")
     public void exitComparatorExpression(final FilterParser.ComparatorExpressionContext context) {
         final String     identifier = context.parameter().IDENTIFIER().getText();
-        final Field field      = parser.getField(context.field().getText());
+        final Field      field      = parser.getField(context.field().getText());
         final Expression attribute  = field.getAttribute();
         final Object     value      = parser.parseValue(field, identifier, parser.getParameter(identifier));
         final Expression expression = cb.literal(value);

@@ -17,17 +17,13 @@ package eu.ill.preql.builder;
 
 import eu.ill.preql.AbstractFilterQueryProvider;
 import eu.ill.preql.domain.Course;
-import eu.ill.preql.support.parser.ByteFieldValueParser;
-import eu.ill.preql.support.parser.CurrencyFieldValueParser;
-import eu.ill.preql.support.parser.DurationFieldValueParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import eu.ill.preql.parser.field.ByteFieldParser;
+import eu.ill.preql.parser.field.CurrencyFieldParser;
+import eu.ill.preql.parser.field.DurationFieldParser;
 
 import javax.persistence.EntityManager;
 
 public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Course> {
-    private Logger logger = LoggerFactory.getLogger(CourseFilterQueryProvider.class);
-
     public CourseFilterQueryProvider(EntityManager entityManager) {
         super(Course.class, entityManager);
         // Register the fields that can be queried
@@ -38,8 +34,8 @@ public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Cours
                 orderableField("code"),
                 orderableField("active"),
                 orderableField("credits"),
-                orderableField("price", new CurrencyFieldValueParser()),
-                orderableField("duration", new DurationFieldValueParser()),
+                orderableField("price", new CurrencyFieldParser()),
+                orderableField("duration", new DurationFieldParser()),
                 orderableField("details.summary", "summary"),
                 orderableField("startDate"),
                 orderableField("endDate"),
@@ -47,7 +43,7 @@ public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Cours
                 field("teacher.name"),
                 field("teacher.age"),
                 field("teacher.affiliation.name"),
-                field("attachments.size", new ByteFieldValueParser()),
+                field("attachments.size", new ByteFieldParser()),
                 field("attachments.name")
         );
     }
