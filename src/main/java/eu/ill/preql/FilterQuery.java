@@ -96,6 +96,16 @@ public class FilterQuery<E> {
     public void setPagination(final Pagination pagination) {
         this.pagination = pagination;
     }
+    
+    /**
+     * Set the pagination
+     *
+     * @param limit 
+     * @param offset
+     */
+    public void setPagination(int limit, int offset) {
+        this.pagination = new Pagination(limit, offset);
+    }
 
     /**
      * Add a predefined expression to the query
