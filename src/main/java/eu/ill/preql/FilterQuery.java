@@ -101,8 +101,8 @@ public class FilterQuery<E> {
     /**
      * Set the pagination
      *
-     * @param limit
-     * @param offset
+     * @param limit the limit
+     * @param offset the offset
      */
     public void setPagination(int limit, int offset) {
         this.pagination = new Pagination(limit, offset);
@@ -240,6 +240,7 @@ public class FilterQuery<E> {
     /**
      * Execute that a SELECT query that returns a count of records
      *
+     * @param  distinct count distinct rows or not
      * @return the number of records
      */
     public Long count(final boolean distinct) {

@@ -33,6 +33,10 @@ public class CriteriaQueryCountBuilder {
 
     /**
      * Create a row count CriteriaQuery from a CriteriaQuery
+     *
+     * @param <T> the criteria query type
+     * @param criteria the criteria to convert into a count query
+     * @return the new criteria query
      */
     public <T> CriteriaQuery<Long> countCriteria(final CriteriaQuery<T> criteria) {
         final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
@@ -67,7 +71,8 @@ public class CriteriaQueryCountBuilder {
     /**
      * Gets The result alias, if none set a default one and return it
      *
-     * @param selection
+     * @param <T>       the selection type
+     * @param selection the selection to use
      * @return root alias or generated one
      */
     public synchronized <T> String getOrCreateAlias(final Selection<T> selection) {
@@ -82,10 +87,10 @@ public class CriteriaQueryCountBuilder {
     /**
      * Find the Root with type class on CriteriaQuery Root Set
      *
-     * @param <T>   root type
+     * @param <T>   the criteria object type
      * @param query criteria query
      * @param clazz root type
-     * @return Root<T> of null if none
+     * @return the root
      */
     public <T> Root<T> findRoot(final CriteriaQuery<?> query, final Class<T> clazz) {
         for (final Root<?> root : query.getRoots()) {
