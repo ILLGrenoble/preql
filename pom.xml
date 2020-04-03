@@ -66,6 +66,13 @@
         <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
         <!-- End maven plugin versions -->
     </properties>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub OWNER Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/ILLGrenoble/preql</url>
+        </repository>
+    </distributionManagement>
     <organization>
         <name>Institut Laue-Langevin</name>
         <url>https://www.ill.eu</url>
