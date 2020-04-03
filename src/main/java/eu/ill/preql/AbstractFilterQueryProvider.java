@@ -51,7 +51,7 @@ public abstract class AbstractFilterQueryProvider<E> {
         this.entityManager = entityManager;
         this.criteriaBuilder = entityManager.getCriteriaBuilder();
         this.criteria = criteriaBuilder.createQuery(objectType);
-        this.root = criteria.from(objectType);
+        this.root = this.criteria.from(objectType);
         this.mapper = new AttributeMapper<>(root, entityManager.getMetamodel());
     }
 

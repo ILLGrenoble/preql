@@ -28,13 +28,13 @@ class PaginationTest {
     @Test
     @DisplayName("should throw an illegal argument because limit is a negative")
     void limitIsNegative() {
-        assertThrows(InvalidQueryException.class, () -> new Pagination(0, -1), "Limit must be a positive value");
+        assertThrows(InvalidQueryException.class, () -> new Pagination(-1, 0), "Limit must be a positive value");
     }
 
     @Test
     @DisplayName("should throw an illegal argument because offset is negative")
     void offsetIsNegative() {
-        assertThrows(InvalidQueryException.class, () -> new Pagination(-100, 0), "Offset must be a positive value");
+        assertThrows(InvalidQueryException.class, () -> new Pagination(0, -100), "Offset must be a positive value");
     }
 
     @Test

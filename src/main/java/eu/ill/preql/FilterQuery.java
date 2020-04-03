@@ -16,12 +16,13 @@
 package eu.ill.preql;
 
 import eu.ill.preql.exception.InvalidQueryException;
-import eu.ill.preql.support.Field;
-import eu.ill.preql.support.OrderableField;
-import eu.ill.preql.support.Pagination;
 import eu.ill.preql.parser.QueryParser;
 import eu.ill.preql.parser.QueryParserContext;
 import eu.ill.preql.parser.ValueParsers;
+import eu.ill.preql.support.Field;
+import eu.ill.preql.support.OrderableField;
+import eu.ill.preql.support.Pagination;
+import eu.ill.preql.support.CriteriaQueryCountBuilder;
 
 import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -96,11 +97,11 @@ public class FilterQuery<E> {
     public void setPagination(final Pagination pagination) {
         this.pagination = pagination;
     }
-    
+
     /**
      * Set the pagination
      *
-     * @param limit 
+     * @param limit
      * @param offset
      */
     public void setPagination(int limit, int offset) {
@@ -125,15 +126,15 @@ public class FilterQuery<E> {
      *
      * @return the typed query of long
      */
-    private TypedQuery<Long> createCountQuery() {
+    private TypedQuery<Long> createCountQuery(boolean distinct) {
         final Predicate[] expressions = parser.parse(query);
-        final CriteriaQuery<Long> criteria = criteriaBuilder.createQuery(Long.class);
-        criteria.select(criteriaBuilder.count(criteria.from(root.getJavaType())))
-                .where(expressions)
-                .distinct(true);
-
-        return entityManager.createQuery(criteria);
+        criteria.where(expressions);
+        criteria.distinct(distinct);
+        final CriteriaQueryCountBuilder converter = new CriteriaQueryCountBuilder(entityManager);
+        CriteriaQuery<Long> countQuery = converter.countCriteria(criteria);
+        return entityManager.createQuery(countQuery);
     }
+
 
     /**
      * Create a SELECT query
@@ -241,8 +242,18 @@ public class FilterQuery<E> {
      *
      * @return the number of records
      */
+    public Long count(final boolean distinct) {
+        final TypedQuery<Long> countQuery = createCountQuery(distinct);
+        return countQuery.getSingleResult();
+    }
+
+    /**
+     * Execute that a SELECT query that returns a count of records
+     *
+     * @return the number of records
+     */
     public Long count() {
-        final TypedQuery<Long> countQuery = createCountQuery();
+        final TypedQuery<Long> countQuery = createCountQuery(true);
         return countQuery.getSingleResult();
     }
 
@@ -282,7 +293,6 @@ public class FilterQuery<E> {
         return this;
     }
 
-
     /**
      * Set the bound parameters
      *
@@ -293,7 +303,6 @@ public class FilterQuery<E> {
         parameters.forEach(this::setParameter);
         return this;
     }
-
 
     /**
      * Get the query parser
@@ -313,6 +322,5 @@ public class FilterQuery<E> {
         final QueryParserContext context = new QueryParserContext(criteriaBuilder, fields, parameters, expressions, valueParsers);
         return new QueryParser(context);
     }
-
 
 }

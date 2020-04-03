@@ -22,10 +22,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import eu.ill.preql.builder.CourseFilterQueryProvider;
 import eu.ill.preql.domain.Course;
-import eu.ill.preql.support.FilterQueryHelper;
 import eu.ill.preql.exception.InvalidQueryException;
 import eu.ill.preql.parser.QueryParser;
-import org.assertj.core.api.Assertions;
+import eu.ill.preql.support.Pagination;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,6 +90,44 @@ public class FilterQueryTest {
         assertThat(execute("startDate >= :startDate", of("startDate", "2017-01-01T00:00:00"))).hasSize(5);
         assertThat(execute("startDate BETWEEN :startDate AND :endDate", of("startDate", "2017-01-01T00:00:00", "endDate", "2018-03-01T23:59:59"))).hasSize(3);
         assertThat(execute("startDate BETWEEN :startDate AND :endDate", of("startDate", "2017-01-01", "endDate", "2018-03-01"))).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("should successfully execute valid count queries")
+    @DataSet("data.yml")
+    void validCountQueries() {
+        assertThat(executeCount("id = :id", of("id", 1))).isEqualTo(1);
+        assertThat(executeCount("id IS NOT NULL")).isEqualTo(5);
+        assertThat(executeCount("id IS NULL")).isEqualTo(0);
+        assertThat(executeCount("code = :code", of("code", "C-JAVA"))).isEqualTo(1);
+        assertThat(executeCount("description LIKE :description", of("description", "%discovering web%"))).isEqualTo(1);
+        assertThat(executeCount("description NOT LIKE :description", of("description", "%discovering web%"))).isEqualTo(4);
+        assertThat(executeCount("price <= :price", of("price", 100.00))).isEqualTo(2);
+        assertThat(executeCount("price <= :price", of("price", "90GBP"))).isEqualTo(2);
+        assertThat(executeCount("summary = :summary", of("summary", "Discovering web development"))).isEqualTo(1);
+        assertThat(executeCount("duration = :duration", of("duration", "10HOURS"))).isEqualTo(2);
+        assertThat(executeCount("duration <= :duration", of("duration", "45MINS"))).isEqualTo(1);
+        assertThat(executeCount("credits < :credits", of("credits", 2000))).isEqualTo(2);
+        assertThat(executeCount("credits <= :credits", of("credits", 2000))).isEqualTo(5);
+        assertThat(executeCount("active = :active", of("active", false))).isEqualTo(1);
+        assertThat(executeCount("id IN :ids", of("ids", ImmutableList.of(1, 2, 3, 4)))).isEqualTo(4);
+        assertThat(executeCount("id NOT IN :ids", of("ids", ImmutableList.of(1, 2, 3, 4)))).isEqualTo(1);
+        assertThat(executeCount("tags = :tags", of("tags", "programming"))).isEqualTo(1);
+        assertThat(executeCount("tags IS NOT NULL")).isEqualTo(1);
+        assertThat(executeCount("tags = :tags", of("tags", "computing"))).isEqualTo(1);
+        assertThat(executeCount("tags IN :tags", of("tags", ImmutableList.of("computing", "programming")))).isEqualTo(1);
+        assertThat(executeCount("teacher.name =  :name", of("name", "Jamie Hall"))).isEqualTo(2);
+        assertThat(executeCount("teacher.name = :teacher1 or  teacher.name = :teacher2", of("teacher1", "Jamie Hall", "teacher2", "Joe Bloggs"))).isEqualTo(4);
+        assertThat(executeCount("teacher.name = :name AND credits <= :credits", of("name", "Jamie Hall", "credits", 1000))).isEqualTo(1);
+        assertThat(executeCount("teacher.age <= :age", of("age", 50))).isEqualTo(5);
+        assertThat(executeCount("credits BETWEEN :lowerBound AND :upperBound", of("lowerBound", 1000, "upperBound", 10000))).isEqualTo(5);
+        assertThat(executeCount("credits NOT BETWEEN :lowerBound AND :upperBound", of("lowerBound", 1000, "upperBound", 10000))).isEqualTo(0);
+        assertThat(executeCount("attachments.size >= :size", of("size", "1MB"))).isEqualTo(1);
+        assertThat(executeCount("attachments.size >= :size", of("size", 2000))).isEqualTo(1);
+        assertThat(executeCount("attachments.name = :name", of("name", "1.pdf"))).isEqualTo(1);
+        assertThat(executeCount("startDate >= :startDate", of("startDate", "2017-01-01T00:00:00"))).isEqualTo(5);
+        assertThat(executeCount("startDate BETWEEN :startDate AND :endDate", of("startDate", "2017-01-01T00:00:00", "endDate", "2018-03-01T23:59:59"))).isEqualTo(3);
+        assertThat(executeCount("startDate BETWEEN :startDate AND :endDate", of("startDate", "2017-01-01", "endDate", "2018-03-01"))).isEqualTo(3);
     }
 
     @Test
@@ -174,8 +211,8 @@ public class FilterQueryTest {
     @DataSet("data.yml")
     void limitResults() {
         final FilterQuery<Course> query = createQuery();
-        query.setPagination((FilterQueryHelper.pagination(0, 1)));
-        assertThat(query.getResultList()).isInstanceOf(List.class).hasSize(1);
+        query.setPagination(new Pagination(2, 0));
+        assertThat(query.getResultList()).isInstanceOf(List.class).hasSize(2);
     }
 
     @Test
@@ -192,7 +229,6 @@ public class FilterQueryTest {
         assertThrows(InvalidQueryException.class, () -> execute(
                 "teacher.age <= :age1 AND teacher.age >= :age2 AND teacher.age >= :age3 AND teacher.age >= :age4",
                 of("age1", 50, "age2", 50, "age3", 50, "age4", 50)));
-
     }
 
     @Test
@@ -215,10 +251,10 @@ public class FilterQueryTest {
     @DisplayName("should successfully get a count result")
     @DataSet("data.yml")
     void countResult() {
-        final FilterQuery<Course> query = createQuery();
+        final FilterQuery<Course> query = createQuery("id = :id AND tags = :tag", ImmutableMap.of("id", 1, "tag", "computing"));
         assertThat(query.count())
                 .isInstanceOf(Long.class)
-                .isEqualTo(5L);
+                .isEqualTo(1L);
     }
 
     private List<Course> execute(final String preql) {
@@ -230,7 +266,7 @@ public class FilterQueryTest {
         final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
         final FilterQuery<Course> query = provider.createQuery(preql);
         query.setParameters(parameters)
-                .setPagination(FilterQueryHelper.pagination(0, 100));
+                .setPagination(new Pagination(100, 0));
         return query;
     }
 
@@ -247,8 +283,22 @@ public class FilterQueryTest {
         final FilterQuery<Course> query = provider.createQuery(preql);
         query.setParameters(parameters)
                 .addExpression((cb, root) -> cb.equal(root.get("tenant").get("id"), 1))
-                .setPagination(FilterQueryHelper.pagination(0, 100));
+                .setPagination(new Pagination(100, 0));
         return query.getResultList();
     }
+
+    private Long executeCount(final String preql) {
+        return executeCount(preql, of());
+    }
+
+    private Long executeCount(final String preql, final Map<String, Object> parameters) {
+        final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
+        final FilterQuery<Course> query = provider.createQuery(preql);
+        query.setParameters(parameters)
+                .addExpression((cb, root) -> cb.equal(root.get("tenant").get("id"), 1))
+                .setPagination(new Pagination(100, 0));
+        return query.count();
+    }
+
 
 }

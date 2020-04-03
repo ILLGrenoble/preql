@@ -38,12 +38,12 @@ public final class Pagination {
     }
 
     /**
-     * @param offset position of the first result,
      * @param limit  maximum number of results to retrieve
      *               numbered from 0
+     * @param offset position of the first result,
      * @throws InvalidQueryException if either argument is negative
      */
-    public Pagination(int offset, int limit) {
+    public Pagination(int limit, int offset) {
         if (offset < 0) {
             throw new InvalidQueryException("Limit must be a positive value");
         }

@@ -37,7 +37,6 @@ import static org.antlr.v4.runtime.CharStreams.fromStream;
  */
 public class QueryParser extends AbstractQueryParser {
 
-
     public QueryParser(final QueryParserContext context) {
         super(context);
     }
