@@ -246,6 +246,8 @@
                         <exclude>src/test/resources/**</exclude>
                         <exclude>**/LICENSE.txt</exclude>
                         <exclude>src/etc</exclude>
+                        <exclude>settings.xml</exclude>
+                        <exclude>.github/workflows/mavenpublish.yml</exclude>
                     </excludes>
                     <strictCheck>true</strictCheck>
                     <mapping>
