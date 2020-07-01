@@ -44,7 +44,7 @@ public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Cours
                 orderableField("startDate"),
                 orderableField("endDate"),
                 field("tags.name", "tags"),
-                field("teacher.name"),
+                orderableField("teacher.name"),
                 field("teacher.age"),
                 field("teacher.affiliation.name"),
                 field("attachments.size", new ByteFieldValueParser()),

@@ -104,6 +104,7 @@ public class FilterQueryTest {
         assertThat(executeCount("description NOT LIKE :description", of("description", "%discovering web%"))).isEqualTo(4);
         assertThat(executeCount("price <= :price", of("price", 100.00))).isEqualTo(2);
         assertThat(executeCount("price <= :price", of("price", "90GBP"))).isEqualTo(2);
+        assertThat(executeCount("price >= :lowerBound AND price <= :upperBound", of("lowerBound", "100GBP", "upperBound", "250GBP"))).isEqualTo(3);
         assertThat(executeCount("summary = :summary", of("summary", "Discovering web development"))).isEqualTo(1);
         assertThat(executeCount("duration = :duration", of("duration", "10HOURS"))).isEqualTo(2);
         assertThat(executeCount("duration <= :duration", of("duration", "45MINS"))).isEqualTo(1);
@@ -197,6 +198,20 @@ public class FilterQueryTest {
                 .first()
                 .hasFieldOrPropertyWithValue("id", 5L);
     }
+
+    @Test
+    @DisplayName("should successfully order results by joined column")
+    @DataSet("data.yml")
+    void orderResultsByJoinedColumn() {
+        final FilterQuery<Course> query = createQuery();
+        query.setOrder("teacher.name", "asc");
+        final List<Course> results = query.getResultList();
+        assertThat(results.get(0).getTeacher().getName()).isEqualTo("Jamie Hall");
+        query.setOrder("teacher.name", "desc");
+        final List<Course> results2 = query.getResultList();
+        assertThat(results2.get(0).getTeacher().getName()).isEqualTo("Joe Bloggs");
+    }
+
 
     @Test
     @DisplayName("should fail to order results because the order field has not been defined")

@@ -96,7 +96,6 @@ public abstract class AbstractFilterQueryProvider<E> {
         return this;
     }
 
-
     /**
      * Create a new query for the given object type
      *

@@ -19,10 +19,10 @@ import eu.ill.preql.exception.InvalidQueryException;
 import eu.ill.preql.parser.QueryParser;
 import eu.ill.preql.parser.QueryParserContext;
 import eu.ill.preql.parser.ValueParsers;
+import eu.ill.preql.support.CriteriaQueryCountBuilder;
 import eu.ill.preql.support.Field;
 import eu.ill.preql.support.OrderableField;
 import eu.ill.preql.support.Pagination;
-import eu.ill.preql.support.CriteriaQueryCountBuilder;
 
 import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -45,17 +45,17 @@ import static java.lang.String.format;
  * @author Jamie Hall
  */
 public class FilterQuery<E> {
-    private final EntityManager entityManager;
-    private final CriteriaBuilder criteriaBuilder;
-    private final CriteriaQuery<E> criteria;
-    private final Root<E> root;
-    private final Map<String, Field> fields;
-    private final Map<String, Object> parameters = new HashMap<>();
-    private final String query;
-    private final List<Predicate> expressions = new ArrayList<>();
-    private final QueryParser parser;
-    private Pagination pagination = Pagination.DEFAULT;
-    private ValueParsers valueParsers = new ValueParsers();
+    private final EntityManager       entityManager;
+    private final CriteriaBuilder     criteriaBuilder;
+    private final CriteriaQuery<E>    criteria;
+    private final Root<E>             root;
+    private final Map<String, Field>  fields;
+    private final Map<String, Object> parameters   = new HashMap<>();
+    private final String              query;
+    private final List<Predicate>     expressions  = new ArrayList<>();
+    private final QueryParser         parser;
+    private       Pagination   pagination   = Pagination.DEFAULT;
+    private final ValueParsers valueParsers = new ValueParsers();
 
     public FilterQuery(
             final String query,
@@ -90,6 +90,19 @@ public class FilterQuery<E> {
     }
 
     /**
+     * Get a field for a given name
+     *
+     * @param name The name of the field
+     * @return the field
+     */
+    public Field getField(final String name) {
+        if (fields.containsKey(name)) {
+            return fields.get(name);
+        }
+        throw new InvalidQueryException(format("Field %s does not exist", name));
+    }
+
+    /**
      * Set the pagination
      *
      * @param pagination the pagination object
@@ -101,7 +114,7 @@ public class FilterQuery<E> {
     /**
      * Set the pagination
      *
-     * @param limit the limit
+     * @param limit  the limit
      * @param offset the offset
      */
     public void setPagination(int limit, int offset) {
@@ -135,22 +148,51 @@ public class FilterQuery<E> {
         return entityManager.createQuery(countQuery);
     }
 
-
     /**
      * Create a SELECT query
-     *
+     * @param distinct  distinct rows or not
      * @return the typed query of <E>
      */
-    private TypedQuery<E> createQuery() {
+    private TypedQuery<E> createQuery(boolean distinct) {
         final Predicate[] expressions = parser.parse(query);
-        criteria.where(expressions)
-                .distinct(true);
+
+        criteria.where(expressions);
+        if (distinct) {
+            criteria.groupBy(root);
+        }
         final TypedQuery<E> query = entityManager.createQuery(criteria);
 
         query.setMaxResults(pagination.getLimit());
         query.setFirstResult(pagination.getOffset());
 
         return query;
+    }
+
+    /**
+     * Execute a SELECT query and return the query results
+     * as a typed List.
+     * @param distinct  distinct rows or not
+     * @return a list of the results
+     * @throws IllegalStateException        if called for a Java
+     *                                      Persistence query language UPDATE or DELETE statement
+     * @throws QueryTimeoutException        if the query execution exceeds
+     *                                      the query timeout value set and only the statement is
+     *                                      rolled back
+     * @throws TransactionRequiredException if a lock mode other than
+     *                                      <code>NONE</code> has been set and there is no transaction
+     *                                      or the persistence context has not been joined to the
+     *                                      transaction
+     * @throws PessimisticLockException     if pessimistic locking
+     *                                      fails and the transaction is rolled back
+     * @throws LockTimeoutException         if pessimistic locking
+     *                                      fails and only the statement is rolled back
+     * @throws PersistenceException         if the query execution exceeds
+     *                                      the query timeout value set and the transaction
+     *                                      is rolled back
+     */
+    public List<E> getResultList(boolean distinct) {
+        final TypedQuery<E> query = createQuery(distinct);
+        return query.getResultList();
     }
 
     /**
@@ -176,8 +218,36 @@ public class FilterQuery<E> {
      *                                      is rolled back
      */
     public List<E> getResultList() {
-        final TypedQuery<E> query = createQuery();
-        return query.getResultList();
+        return getResultList(true);
+    }
+
+    /**
+     * Execute a SELECT query and return the query results
+     * as a typed <code>java.util.stream.Stream</code>.
+     * By default this method delegates to <code>getResultList().stream()</code>,
+     * however persistence provider may choose to override this method
+     * to provide additional capabilities.
+     * @param distinct  distinct rows or not
+     * @return a stream of the results
+     * @throws IllegalStateException        if called for a Java
+     *                                      Persistence query language UPDATE or DELETE statement
+     * @throws QueryTimeoutException        if the query execution exceeds
+     *                                      the query timeout value set and only the statement is
+     *                                      rolled back
+     * @throws TransactionRequiredException if a lock mode other than
+     *                                      <code>NONE</code> has been set and there is no transaction
+     *                                      or the persistence context has not been joined to the transaction
+     * @throws PessimisticLockException     if pessimistic locking
+     *                                      fails and the transaction is rolled back
+     * @throws LockTimeoutException         if pessimistic locking
+     *                                      fails and only the statement is rolled back
+     * @throws PersistenceException         if the query execution exceeds
+     *                                      the query timeout value set and the transaction
+     *                                      is rolled back
+     */
+    public Stream<E> getResultStream(boolean distinct) {
+        final TypedQuery<E> query = createQuery(distinct);
+        return query.getResultStream();
     }
 
     /**
@@ -205,8 +275,7 @@ public class FilterQuery<E> {
      *                                      is rolled back
      */
     public Stream<E> getResultStream() {
-        final TypedQuery<E> query = createQuery();
-        return query.getResultStream();
+        return getResultStream(true);
     }
 
     /**
@@ -233,14 +302,14 @@ public class FilterQuery<E> {
      *                                      is rolled back
      */
     public E getSingleResult() {
-        final TypedQuery<E> query = createQuery();
+        final TypedQuery<E> query = createQuery(false);
         return query.getSingleResult();
     }
 
     /**
      * Execute that a SELECT query that returns a count of records
      *
-     * @param  distinct count distinct rows or not
+     * @param distinct count distinct rows or not
      * @return the number of records
      */
     public Long count(final boolean distinct) {
