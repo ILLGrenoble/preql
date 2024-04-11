@@ -18,20 +18,20 @@ package eu.ill.preql.support;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.criteria.From;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.Attribute;
-import javax.persistence.metamodel.ManagedType;
-import javax.persistence.metamodel.Metamodel;
-import javax.persistence.metamodel.PluralAttribute;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.ManagedType;
+import jakarta.persistence.metamodel.Metamodel;
+import jakarta.persistence.metamodel.PluralAttribute;
 import java.util.Set;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static javax.persistence.criteria.JoinType.LEFT;
-import static javax.persistence.metamodel.Attribute.PersistentAttributeType.EMBEDDED;
+import static jakarta.persistence.criteria.JoinType.LEFT;
+import static jakarta.persistence.metamodel.Attribute.PersistentAttributeType.EMBEDDED;
 
 /**
  * A mapper to map attributes to their respective paths in the entity object graph

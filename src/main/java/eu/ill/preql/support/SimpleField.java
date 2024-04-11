@@ -20,7 +20,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import javax.persistence.criteria.Path;
+import jakarta.persistence.criteria.Path;
 
 import static java.util.Objects.requireNonNull;
 

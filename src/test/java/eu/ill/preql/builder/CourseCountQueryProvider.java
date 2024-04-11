@@ -15,20 +15,19 @@
  */
 package eu.ill.preql.builder;
 
-import eu.ill.preql.AbstractFilterQueryProvider;
+import eu.ill.preql.AbstractCountQueryProvider;
 import eu.ill.preql.domain.Course;
 import eu.ill.preql.support.parser.ByteFieldValueParser;
 import eu.ill.preql.support.parser.CurrencyFieldValueParser;
 import eu.ill.preql.support.parser.DurationFieldValueParser;
+import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.persistence.EntityManager;
+public class CourseCountQueryProvider extends AbstractCountQueryProvider<Course> {
+    private Logger logger = LoggerFactory.getLogger(CourseCountQueryProvider.class);
 
-public class CourseFilterQueryProvider extends AbstractFilterQueryProvider<Course> {
-    private Logger logger = LoggerFactory.getLogger(CourseFilterQueryProvider.class);
-
-    public CourseFilterQueryProvider(EntityManager entityManager) {
+    public CourseCountQueryProvider(EntityManager entityManager) {
         super(Course.class, entityManager);
         // Register the fields that can be queried
         addFields(

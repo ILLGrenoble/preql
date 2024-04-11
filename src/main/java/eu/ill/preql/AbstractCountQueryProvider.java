@@ -21,14 +21,14 @@ import jakarta.persistence.EntityManager;
  * @param <E> the root entity type
  * @author Jamie Hall
  */
-public abstract class AbstractFilterQueryProvider<E> extends AbstractQueryProvider<E, E> {
+public abstract class AbstractCountQueryProvider<E> extends AbstractQueryProvider<E, Long> {
 
     /**
      * @param objectType    the object type that the query will correspond to
      * @param entityManager the entity manager
      */
-    public AbstractFilterQueryProvider(final Class<E> objectType, final EntityManager entityManager) {
-        super(objectType, objectType, entityManager);
+    public AbstractCountQueryProvider(final Class<E> objectType, final EntityManager entityManager) {
+        super(objectType, Long.class, entityManager);
     }
 
     /**
@@ -37,8 +37,8 @@ public abstract class AbstractFilterQueryProvider<E> extends AbstractQueryProvid
      * @param preql - the expression query
      * @return a new filter instance
      */
-    public FilterQuery<E> createQuery(final String preql) {
-        return new FilterQuery<>(preql,
+    public CountQuery<E> createQuery(final String preql) {
+        return new CountQuery<>(preql,
                 entityManager,
                 criteriaBuilder,
                 criteria,
@@ -51,7 +51,7 @@ public abstract class AbstractFilterQueryProvider<E> extends AbstractQueryProvid
      *
      * @return a new query instance
      */
-    public FilterQuery<E> createQuery() {
+    public CountQuery<E> createQuery() {
         return createQuery(null);
     }
 }

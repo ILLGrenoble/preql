@@ -20,6 +20,7 @@ import com.github.database.rider.core.api.dataset.DataSet;
 import com.github.database.rider.junit5.DBUnitExtension;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import eu.ill.preql.builder.CourseCountQueryProvider;
 import eu.ill.preql.builder.CourseFilterQueryProvider;
 import eu.ill.preql.domain.Course;
 import eu.ill.preql.exception.InvalidQueryException;
@@ -182,7 +183,7 @@ public class FilterQueryTest {
     @DisplayName("should successfully get a list of results")
     @DataSet("data.yml")
     void resultList() {
-        final FilterQuery<Course> query = createQuery();
+        final FilterQuery<Course> query = createFilterQuery();
         assertThat(query.getResultList()).isInstanceOf(List.class).hasSize(5);
     }
 
@@ -190,7 +191,7 @@ public class FilterQueryTest {
     @DisplayName("should successfully order results")
     @DataSet("data.yml")
     void orderByResultList() {
-        final FilterQuery<Course> query = createQuery();
+        final FilterQuery<Course> query = createFilterQuery();
         query.setOrder("id", "desc");
         assertThat(query.getResultList())
                 .isInstanceOf(List.class)
@@ -203,7 +204,7 @@ public class FilterQueryTest {
     @DisplayName("should successfully order results by joined column")
     @DataSet("data.yml")
     void orderResultsByJoinedColumn() {
-        final FilterQuery<Course> query = createQuery();
+        final FilterQuery<Course> query = createFilterQuery();
         query.setOrder("teacher.name", "asc");
         final List<Course> results = query.getResultList();
         assertThat(results.get(0).getTeacher().getName()).isEqualTo("Jamie Hall");
@@ -217,7 +218,7 @@ public class FilterQueryTest {
     @DisplayName("should fail to order results because the order field has not been defined")
     @DataSet("data.yml")
     void failOrderByResultList() {
-        final FilterQuery<Course> query = createQuery();
+        final FilterQuery<Course> query = createFilterQuery();
         assertThrows(InvalidQueryException.class, () -> query.setOrder("tags", "desc"));
     }
 
@@ -225,7 +226,7 @@ public class FilterQueryTest {
     @DisplayName("should successfully limit results")
     @DataSet("data.yml")
     void limitResults() {
-        final FilterQuery<Course> query = createQuery();
+        final FilterQuery<Course> query = createFilterQuery();
         query.setPagination(new Pagination(2, 0));
         assertThat(query.getResultList()).isInstanceOf(List.class).hasSize(2);
     }
@@ -234,7 +235,7 @@ public class FilterQueryTest {
     @DisplayName("should successfully get a stream of results")
     @DataSet("data.yml")
     void resultStream() {
-        final FilterQuery<Course> query = createQuery();
+        final FilterQuery<Course> query = createFilterQuery();
         assertThat(query.getResultStream()).isInstanceOf(Stream.class).hasSize(5);
     }
 
@@ -256,7 +257,7 @@ public class FilterQueryTest {
     @DisplayName("should successfully get a single result")
     @DataSet("data.yml")
     void singleResult() {
-        final FilterQuery<Course> query = createQuery("id = :id", ImmutableMap.of("id", 1));
+        final FilterQuery<Course> query = createFilterQuery("id = :id", ImmutableMap.of("id", 1));
         assertThat(query.getSingleResult())
                 .isInstanceOf(Course.class)
                 .hasFieldOrPropertyWithValue("id", 1L);
@@ -266,8 +267,8 @@ public class FilterQueryTest {
     @DisplayName("should successfully get a count result")
     @DataSet("data.yml")
     void countResult() {
-        final FilterQuery<Course> query = createQuery("id = :id AND tags = :tag", ImmutableMap.of("id", 1, "tag", "computing"));
-        assertThat(query.count())
+        final CountQuery<Course> query = createCountQuery("id = :id AND tags = :tag", ImmutableMap.of("id", 1, "tag", "computing"));
+        assertThat(query.getSingleResult())
                 .isInstanceOf(Long.class)
                 .isEqualTo(1L);
     }
@@ -276,7 +277,7 @@ public class FilterQueryTest {
         return execute(preql, of());
     }
 
-    private FilterQuery<Course> createQuery(final String preql, final Map<String, Object> parameters) {
+    private FilterQuery<Course> createFilterQuery(final String preql, final Map<String, Object> parameters) {
 
         final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
         final FilterQuery<Course> query = provider.createQuery(preql);
@@ -285,12 +286,28 @@ public class FilterQueryTest {
         return query;
     }
 
-    private FilterQuery<Course> createQuery(final Map<String, Object> parameters) {
-        return createQuery(null, parameters);
+    private FilterQuery<Course> createFilterQuery(final Map<String, Object> parameters) {
+        return createFilterQuery(null, parameters);
     }
 
-    private FilterQuery<Course> createQuery() {
-        return createQuery(null, ImmutableMap.of());
+    private FilterQuery<Course> createFilterQuery() {
+        return createFilterQuery(null, ImmutableMap.of());
+    }
+
+    private CountQuery<Course> createCountQuery(final String preql, final Map<String, Object> parameters) {
+
+        final CourseCountQueryProvider provider = new CourseCountQueryProvider(em());
+        final CountQuery<Course> query = provider.createQuery(preql);
+        query.setParameters(parameters);
+        return query;
+    }
+
+    private CountQuery<Course> createCountQuery(final Map<String, Object> parameters) {
+        return createCountQuery(null, parameters);
+    }
+
+    private CountQuery<Course> createCountQuery() {
+        return createCountQuery(null, ImmutableMap.of());
     }
 
     private List<Course> execute(final String preql, final Map<String, Object> parameters) {
@@ -307,12 +324,11 @@ public class FilterQueryTest {
     }
 
     private Long executeCount(final String preql, final Map<String, Object> parameters) {
-        final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
-        final FilterQuery<Course> query = provider.createQuery(preql);
+        final CourseCountQueryProvider provider = new CourseCountQueryProvider(em());
+        final CountQuery<Course> query = provider.createQuery(preql);
         query.setParameters(parameters)
-                .addExpression((cb, root) -> cb.equal(root.get("tenant").get("id"), 1))
-                .setPagination(new Pagination(100, 0));
-        return query.count();
+                .addExpression((cb, root) -> cb.equal(root.get("tenant").get("id"), 1));
+        return query.getSingleResult();
     }
 
 

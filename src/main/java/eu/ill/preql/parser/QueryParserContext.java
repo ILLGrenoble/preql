@@ -17,8 +17,8 @@ package eu.ill.preql.parser;
 
 import eu.ill.preql.support.Field;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import java.util.Map;
 

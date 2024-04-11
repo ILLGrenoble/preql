@@ -12,9 +12,9 @@
         <class>eu.ill.preql.domain.Tag</class>
         <class>eu.ill.preql.domain.Attachment</class>
         <properties>
-            <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>
-            <property name="javax.persistence.jdbc.url" value="jdbc:h2:mem:test"/>
-            <property name="javax.persistence.jdbc.user" value="sa"/>
+            <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:h2:mem:test"/>
+            <property name="jakarta.persistence.jdbc.user" value="sa"/>
             <property name="hibernate.format_sql" value="true"/>
             <property name="hbm2ddl.auto" value="create"/>
             <property name="hibernate.hbm2ddl.auto" value="create"/>

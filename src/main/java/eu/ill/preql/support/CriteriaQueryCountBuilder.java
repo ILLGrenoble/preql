@@ -16,8 +16,8 @@
 
 package eu.ill.preql.support;
 
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.*;
 
 import static java.lang.String.format;
 

@@ -17,7 +17,7 @@ package eu.ill.preql.support;
 
 import eu.ill.preql.parser.FieldValueParser;
 
-import javax.persistence.criteria.Path;
+import jakarta.persistence.criteria.Path;
 
 /**
  * Defines a field that can be ordered

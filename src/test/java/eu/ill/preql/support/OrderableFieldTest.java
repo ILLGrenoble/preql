@@ -19,7 +19,7 @@ import eu.ill.preql.parser.FieldValueParser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.persistence.criteria.Path;
+import jakarta.persistence.criteria.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
