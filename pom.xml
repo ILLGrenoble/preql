@@ -21,7 +21,7 @@
 
     <groupId>eu.ill</groupId>
     <artifactId>preql</artifactId>
-    <version>1.0.2</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
     <url>https://github.com/ILLGrenoble/preql</url>
     <name>${project.groupId}:${project.artifactId}</name>
@@ -88,6 +88,16 @@
             <organizationUrl>https://www.ill.eu</organizationUrl>
             <roles>
                 <role>architect</role>
+                <role>developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>stuartcaunt</id>
+            <name>Stuart Caunt</name>
+            <email>caunt@ill.eu</email>
+            <organization>Institut Laue-Langevin</organization>
+            <organizationUrl>https://www.ill.eu</organizationUrl>
+            <roles>
                 <role>developer</role>
             </roles>
         </developer>
