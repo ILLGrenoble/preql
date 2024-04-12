@@ -26,11 +26,11 @@ import jakarta.persistence.criteria.Path;
  */
 public class OrderableField extends SimpleField {
 
-    public OrderableField(String name, final Path<?> attribute) {
-        super(name, attribute);
+    public OrderableField(String attribute, String name, final Path<?> path) {
+        super(attribute, name, path);
     }
 
-    public OrderableField(String name, final Path<?> attribute, FieldValueParser valueParser) {
-        super(name, attribute, valueParser);
+    public OrderableField(String attribute, String name, final Path<?> path, FieldValueParser valueParser) {
+        super(attribute, name, path, valueParser);
     }
 }

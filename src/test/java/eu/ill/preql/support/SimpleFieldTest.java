@@ -28,29 +28,36 @@ import static org.mockito.Mockito.mock;
 @DisplayName("Simple field tests")
 class SimpleFieldTest {
 
-    private final Path                     attribute = mock(Path.class);
-    private final FieldValueParser<String> parser    = value -> "hello";
+    private final Path                     path   = mock(Path.class);
+    private final FieldValueParser<String> parser = value -> "hello";
 
     @Test
     @DisplayName("should successfully create a new field instance")
     void create() {
-        assertThat(new SimpleField("name", attribute)).isInstanceOf(SimpleField.class);
-        assertThat(new SimpleField("name", attribute, parser)).isInstanceOf(SimpleField.class);
+        assertThat(new SimpleField("name", "name", path)).isInstanceOf(SimpleField.class);
+        assertThat(new SimpleField("name", "name", path, parser)).isInstanceOf(SimpleField.class);
     }
 
     @Test
     @DisplayName("should successfully test getters")
     void getters() {
-        final SimpleField name = new SimpleField("name", attribute, parser);
+        final SimpleField name = new SimpleField("name", "name", path, parser);
         assertThat(name.getName()).isEqualTo("name");
-        assertThat(name.getAttribute()).isEqualTo(attribute);
+        assertThat(name.getPath()).isEqualTo(path);
         assertThat(name.getValueParser()).isEqualTo(parser);
     }
 
     @Test
     @DisplayName("should fail to create a new field instance because the name is null")
     void nameIsNull() {
-        assertThrows(NullPointerException.class, () -> new SimpleField(null, attribute, parser));
-        assertThrows(NullPointerException.class, () -> new SimpleField("name", null, parser));
+        assertThrows(NullPointerException.class, () -> new SimpleField("name", null, path, parser));
+        assertThrows(NullPointerException.class, () -> new SimpleField("name", "name", null, parser));
+    }
+
+    @Test
+    @DisplayName("should fail to create a new field instance because the attribute is null")
+    void attributeIsNull() {
+        assertThrows(NullPointerException.class, () -> new SimpleField(null, "name", path, parser));
+        assertThrows(NullPointerException.class, () -> new SimpleField(null, "name", null, parser));
     }
 }

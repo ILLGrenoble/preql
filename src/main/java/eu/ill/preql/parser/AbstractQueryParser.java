@@ -78,7 +78,7 @@ public abstract class AbstractQueryParser {
      * @return the parsed value
      */
     public Object parseValue(final Field field, final String parameter, final Object value) {
-        final Class<?> valueType = field.getAttribute().getJavaType();
+        final Class<?> valueType = field.getPath().getJavaType();
         try {
             if (value == null) {
                 throw new InvalidQueryException("Parameter cannot be null");

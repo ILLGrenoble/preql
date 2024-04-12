@@ -19,16 +19,15 @@ import eu.ill.preql.exception.InvalidQueryException;
 import eu.ill.preql.parser.QueryParser;
 import eu.ill.preql.parser.QueryParserContext;
 import eu.ill.preql.parser.ValueParsers;
-import eu.ill.preql.support.CriteriaQueryCountBuilder;
 import eu.ill.preql.support.Field;
 import eu.ill.preql.support.OrderableField;
 import eu.ill.preql.support.Pagination;
-
 import jakarta.persistence.*;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,19 +56,23 @@ public class FilterQuery<E> {
     private       Pagination   pagination   = Pagination.DEFAULT;
     private final ValueParsers valueParsers = new ValueParsers();
 
+    private final CountQuery<E> countQuery;
+
     public FilterQuery(
             final String query,
             final EntityManager entityManager,
             final CriteriaBuilder criteriaBuilder,
             final CriteriaQuery<E> criteria,
             final Root<E> root,
-            final Map<String, Field> fields) {
+            final Map<String, Field> fields,
+            final CountQuery<E> countQuery) {
         this.query = query;
         this.entityManager = entityManager;
         this.criteriaBuilder = criteriaBuilder;
         this.criteria = criteria;
         this.root = root;
         this.fields = fields;
+        this.countQuery = countQuery;
         this.parser = createParser();
     }
 
@@ -129,23 +132,11 @@ public class FilterQuery<E> {
      * @return this
      */
     public FilterQuery<E> addExpression(final BiFunction<CriteriaBuilder, Root<E>, Predicate> callback) {
+        this.countQuery.addExpression(callback);
+
         final Predicate expression = callback.apply(criteriaBuilder, root);
         expressions.add(expression);
         return this;
-    }
-
-    /**
-     * Create a COUNT query
-     *
-     * @return the typed query of long
-     */
-    private TypedQuery<Long> createCountQuery(boolean distinct) {
-        final Predicate[] expressions = parser.parse(query);
-        criteria.where(expressions);
-        criteria.distinct(distinct);
-        final CriteriaQueryCountBuilder converter = new CriteriaQueryCountBuilder(entityManager);
-        CriteriaQuery<Long> countQuery = converter.countCriteria(criteria);
-        return entityManager.createQuery(countQuery);
     }
 
     /**
@@ -166,6 +157,14 @@ public class FilterQuery<E> {
         query.setFirstResult(pagination.getOffset());
 
         return query;
+    }
+
+    public Long count() {
+        return this.countQuery.getSingleResult(true);
+    }
+
+    public Long count(boolean distinct) {
+        return this.countQuery.getSingleResult(distinct);
     }
 
     /**
@@ -315,6 +314,8 @@ public class FilterQuery<E> {
      * @throws InvalidQueryException if the parameter has already been defined
      */
     public FilterQuery<E> setParameter(final String name, final Object value) {
+        this.countQuery.setParameter(name, value);
+
         if (parameters.containsKey(name)) {
             throw new InvalidQueryException(format("Parameter '%s' has already been set", name));
         }
@@ -335,9 +336,9 @@ public class FilterQuery<E> {
         }
         final Field field = getOrderField(name);
         if ("asc".equals(direction)) {
-            criteria.orderBy(criteriaBuilder.asc(field.getAttribute()));
+            criteria.orderBy(criteriaBuilder.asc(field.getPath()));
         } else {
-            criteria.orderBy(criteriaBuilder.desc(field.getAttribute()));
+            criteria.orderBy(criteriaBuilder.desc(field.getPath()));
         }
         return this;
     }

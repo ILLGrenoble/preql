@@ -19,9 +19,7 @@ import eu.ill.preql.exception.InvalidQueryException;
 import eu.ill.preql.parser.QueryParser;
 import eu.ill.preql.parser.QueryParserContext;
 import eu.ill.preql.parser.ValueParsers;
-import eu.ill.preql.support.CriteriaQueryCountBuilder;
 import eu.ill.preql.support.Field;
-import eu.ill.preql.support.Pagination;
 import jakarta.persistence.*;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -42,7 +40,7 @@ import static java.lang.String.format;
  * @param <E> the root entity type
  * @author Jamie Hall
  */
-public class CountQuery<E> {
+class CountQuery<E> {
     private final EntityManager       entityManager;
     private final CriteriaBuilder     criteriaBuilder;
     private final CriteriaQuery<Long> criteria;
@@ -52,10 +50,9 @@ public class CountQuery<E> {
     private final String              query;
     private final List<Predicate>     expressions  = new ArrayList<>();
     private final QueryParser         parser;
-    private       Pagination   pagination   = Pagination.DEFAULT;
     private final ValueParsers valueParsers = new ValueParsers();
 
-    public CountQuery(
+    CountQuery(
             final String query,
             final EntityManager entityManager,
             final CriteriaBuilder criteriaBuilder,
@@ -77,7 +74,7 @@ public class CountQuery<E> {
      * @param name The name of the field
      * @return the field
      */
-    public Field getField(final String name) {
+    Field getField(final String name) {
         if (fields.containsKey(name)) {
             return fields.get(name);
         }
@@ -91,24 +88,10 @@ public class CountQuery<E> {
      * @param callback the expression callback
      * @return this
      */
-    public CountQuery<E> addExpression(final BiFunction<CriteriaBuilder, Root<E>, Predicate> callback) {
+    CountQuery<E> addExpression(final BiFunction<CriteriaBuilder, Root<E>, Predicate> callback) {
         final Predicate expression = callback.apply(criteriaBuilder, root);
         expressions.add(expression);
         return this;
-    }
-
-    /**
-     * Create a COUNT query
-     *
-     * @return the typed query of long
-     */
-    private TypedQuery<Long> createCountQuery(boolean distinct) {
-        final Predicate[] expressions = parser.parse(query);
-        criteria.where(expressions);
-        criteria.distinct(distinct);
-        final CriteriaQueryCountBuilder converter = new CriteriaQueryCountBuilder(entityManager);
-        CriteriaQuery<Long> countQuery = converter.countCriteria(criteria);
-        return entityManager.createQuery(countQuery);
     }
 
     /**
@@ -153,7 +136,7 @@ public class CountQuery<E> {
      *                                      the query timeout value set and the transaction
      *                                      is rolled back
      */
-    public Long getSingleResult(final boolean distinct) {
+    Long getSingleResult(final boolean distinct) {
         final TypedQuery<Long> query = createQuery(distinct);
         return query.getSingleResult();
     }
@@ -181,7 +164,7 @@ public class CountQuery<E> {
      *                                      the query timeout value set and the transaction
      *                                      is rolled back
      */
-    public Long getSingleResult() {
+    Long getSingleResult() {
         final TypedQuery<Long> query = createQuery(true);
         return query.getSingleResult();
     }
@@ -195,7 +178,7 @@ public class CountQuery<E> {
      * @return this
      * @throws InvalidQueryException if the parameter has already been defined
      */
-    public CountQuery<E> setParameter(final String name, final Object value) {
+    CountQuery<E> setParameter(final String name, final Object value) {
         if (parameters.containsKey(name)) {
             throw new InvalidQueryException(format("Parameter '%s' has already been set", name));
         }
@@ -209,7 +192,7 @@ public class CountQuery<E> {
      * @param parameters the parameters to be bound
      * @return this
      */
-    public CountQuery<E> setParameters(final Map<String, Object> parameters) {
+    CountQuery<E> setParameters(final Map<String, Object> parameters) {
         parameters.forEach(this::setParameter);
         return this;
     }
@@ -219,7 +202,7 @@ public class CountQuery<E> {
      *
      * @return the query parser
      */
-    public QueryParser getParser() {
+    QueryParser getParser() {
         return parser;
     }
 

@@ -32,33 +32,42 @@ import static java.util.Objects.requireNonNull;
  */
 public class SimpleField implements Field {
 
+    private String           attribute;
     private String           name;
-    private Path<?>          attribute;
+    private Path<?>          path;
     private FieldValueParser valueParser = null;
 
     /**
      * Create a new field
      *
+     * @param attribute     - the attribute of the field
      * @param name      - the name of the field
-     * @param attribute - attribute to the field
+     * @param path - attribute to the field
      */
-    public SimpleField(final String name, final Path<?> attribute) {
+    public SimpleField(final String attribute, final String name, final Path<?> path) {
+        this.attribute = requireNonNull(attribute, "Attribute cannot be null");
         this.name = requireNonNull(name, "Name cannot be null");
-        requireNonNull(attribute, "Path cannot be null");
-        this.attribute = attribute;
+        requireNonNull(path, "Path cannot be null");
+        this.path = path;
 
     }
 
     /**
      * Create a new field
      *
-     * @param name        - the name of the field
-     * @param attribute   - attribute to the field
+     * @param attribute     - the attribute of the field
+     * @param name          - the name of the field
+     * @param path          - path to the field
      * @param valueParser - a custom value parser for the field
      */
-    public SimpleField(final String name, final Path<?> attribute, final FieldValueParser valueParser) {
-        this(name, attribute);
+    public SimpleField(final String attribute, final String name, final Path<?> path, final FieldValueParser valueParser) {
+        this(attribute, name, path);
         this.valueParser = valueParser;
+    }
+
+    @Override
+    public String getAttribute() {
+        return attribute;
     }
 
     @Override
@@ -67,8 +76,8 @@ public class SimpleField implements Field {
     }
 
     @Override
-    public Path<?> getAttribute() {
-        return attribute;
+    public Path<?> getPath() {
+        return path;
     }
 
     @Override
@@ -104,7 +113,7 @@ public class SimpleField implements Field {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("name", name)
-                .append("attribute", attribute)
+                .append("path", path)
                 .append("valueParser", valueParser)
                 .toString();
     }

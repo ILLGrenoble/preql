@@ -28,29 +28,36 @@ import static org.mockito.Mockito.mock;
 @DisplayName("Orderable field tests")
 class OrderableFieldTest {
 
-    private final Path                     attribute = mock(Path.class);
+    private final Path path = mock(Path.class);
     private final FieldValueParser<String> parser    = value -> "hello";
 
     @Test
     @DisplayName("should successfully create a new orderable field instance")
     void create() {
-        assertThat(new OrderableField("name", attribute)).isInstanceOf(OrderableField.class);
-        assertThat(new OrderableField("name", attribute, parser)).isInstanceOf(OrderableField.class);
+        assertThat(new OrderableField("name", "name", path)).isInstanceOf(OrderableField.class);
+        assertThat(new OrderableField("name", "name", path, parser)).isInstanceOf(OrderableField.class);
     }
 
     @Test
     @DisplayName("should successfully test getters")
     void getters() {
-        final OrderableField name = new OrderableField("name", attribute, parser);
+        final OrderableField name = new OrderableField("name", "name", path, parser);
         assertThat(name.getName()).isEqualTo("name");
-        assertThat(name.getAttribute()).isEqualTo(attribute);
+        assertThat(name.getPath()).isEqualTo(path);
         assertThat(name.getValueParser()).isEqualTo(parser);
     }
 
     @Test
     @DisplayName("should fail to create a new orderable field instance because the name is null")
     void nameIsNull() {
-        assertThrows(NullPointerException.class, () -> new OrderableField(null, attribute, parser));
-        assertThrows(NullPointerException.class, () -> new OrderableField("name", null, parser));
+        assertThrows(NullPointerException.class, () -> new OrderableField("name", null, path, parser));
+        assertThrows(NullPointerException.class, () -> new OrderableField("name", "name", null, parser));
+    }
+
+    @Test
+    @DisplayName("should fail to create a new orderable field instance because the attribute is null")
+    void attributeIsNull() {
+        assertThrows(NullPointerException.class, () -> new OrderableField(null, "name", path, parser));
+        assertThrows(NullPointerException.class, () -> new OrderableField(null, "name", null, parser));
     }
 }

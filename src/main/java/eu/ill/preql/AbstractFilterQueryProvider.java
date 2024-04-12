@@ -15,6 +15,8 @@
  */
 package eu.ill.preql;
 
+import eu.ill.preql.support.Field;
+import eu.ill.preql.support.OrderableField;
 import jakarta.persistence.EntityManager;
 
 /**
@@ -23,12 +25,15 @@ import jakarta.persistence.EntityManager;
  */
 public abstract class AbstractFilterQueryProvider<E> extends AbstractQueryProvider<E, E> {
 
+    private final CountQueryProvider<E> countQueryProvider;
+
     /**
      * @param objectType    the object type that the query will correspond to
      * @param entityManager the entity manager
      */
     public AbstractFilterQueryProvider(final Class<E> objectType, final EntityManager entityManager) {
         super(objectType, objectType, entityManager);
+        this.countQueryProvider = new CountQueryProvider<E>(objectType, entityManager);
     }
 
     /**
@@ -38,12 +43,15 @@ public abstract class AbstractFilterQueryProvider<E> extends AbstractQueryProvid
      * @return a new filter instance
      */
     public FilterQuery<E> createQuery(final String preql) {
+        CountQuery<E> countQuery = this.countQueryProvider.createQuery(preql);
+
         return new FilterQuery<>(preql,
                 entityManager,
                 criteriaBuilder,
                 criteria,
                 root,
-                fields);
+                fields,
+                countQuery);
     }
 
     /**
@@ -54,4 +62,22 @@ public abstract class AbstractFilterQueryProvider<E> extends AbstractQueryProvid
     public FilterQuery<E> createQuery() {
         return createQuery(null);
     }
+
+    /**
+     * Add a new field
+     *
+     * @param field The field to be added
+     * @return this
+     */
+    public AbstractQueryProvider<E, E> addField(final Field field) {
+        // Clone field for count query provider
+        if (field instanceof OrderableField) {
+            this.countQueryProvider.addField(this.countQueryProvider.field(field.getAttribute(), field.getName(), field.getValueParser()));
+        } else {
+            this.countQueryProvider.addField(this.countQueryProvider.orderableField(field.getAttribute(), field.getName(), field.getValueParser()));
+        }
+
+        return super.addField(field);
+    }
+
 }

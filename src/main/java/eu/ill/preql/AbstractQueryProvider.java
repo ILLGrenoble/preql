@@ -138,7 +138,7 @@ public abstract class AbstractQueryProvider<E, S> {
      * @return a new simple field
      */
     public SimpleField field(final String attribute, final String alias, final FieldValueParser<?> valueParser) {
-        return new SimpleField(alias, mapper.get(attribute), valueParser);
+        return new SimpleField(attribute, alias, mapper.get(attribute), valueParser);
     }
 
     /**
@@ -182,7 +182,7 @@ public abstract class AbstractQueryProvider<E, S> {
      * @return a new orderable field
      */
     public OrderableField orderableField(final String attribute, final String alias, final FieldValueParser<?> valueParser) {
-        return new OrderableField(alias, mapper.get(attribute), valueParser);
+        return new OrderableField(attribute, alias, mapper.get(attribute), valueParser);
     }
 
 

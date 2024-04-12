@@ -26,6 +26,12 @@ import jakarta.persistence.criteria.Path;
  */
 public interface Field {
     /**
+     * The name of the represented attribute
+     * @return the name of the field
+     */
+    String getAttribute();
+
+    /**
      * The name of the field that is used in the query expressions
      *
      * @return the name of the field
@@ -38,7 +44,7 @@ public interface Field {
      *
      * @return path to the attribute of the field
      */
-    Path<?> getAttribute();
+    Path<?> getPath();
 
     /**
      * A custom value parser for the field

@@ -20,7 +20,6 @@ import com.github.database.rider.core.api.dataset.DataSet;
 import com.github.database.rider.junit5.DBUnitExtension;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import eu.ill.preql.builder.CourseCountQueryProvider;
 import eu.ill.preql.builder.CourseFilterQueryProvider;
 import eu.ill.preql.domain.Course;
 import eu.ill.preql.exception.InvalidQueryException;
@@ -267,8 +266,8 @@ public class FilterQueryTest {
     @DisplayName("should successfully get a count result")
     @DataSet("data.yml")
     void countResult() {
-        final CountQuery<Course> query = createCountQuery("id = :id AND tags = :tag", ImmutableMap.of("id", 1, "tag", "computing"));
-        assertThat(query.getSingleResult())
+        final FilterQuery<Course> query = createFilterQuery("id = :id AND tags = :tag", ImmutableMap.of("id", 1, "tag", "computing"));
+        assertThat(query.count())
                 .isInstanceOf(Long.class)
                 .isEqualTo(1L);
     }
@@ -294,22 +293,6 @@ public class FilterQueryTest {
         return createFilterQuery(null, ImmutableMap.of());
     }
 
-    private CountQuery<Course> createCountQuery(final String preql, final Map<String, Object> parameters) {
-
-        final CourseCountQueryProvider provider = new CourseCountQueryProvider(em());
-        final CountQuery<Course> query = provider.createQuery(preql);
-        query.setParameters(parameters);
-        return query;
-    }
-
-    private CountQuery<Course> createCountQuery(final Map<String, Object> parameters) {
-        return createCountQuery(null, parameters);
-    }
-
-    private CountQuery<Course> createCountQuery() {
-        return createCountQuery(null, ImmutableMap.of());
-    }
-
     private List<Course> execute(final String preql, final Map<String, Object> parameters) {
         final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
         final FilterQuery<Course> query = provider.createQuery(preql);
@@ -324,11 +307,12 @@ public class FilterQueryTest {
     }
 
     private Long executeCount(final String preql, final Map<String, Object> parameters) {
-        final CourseCountQueryProvider provider = new CourseCountQueryProvider(em());
-        final CountQuery<Course> query = provider.createQuery(preql);
+        final CourseFilterQueryProvider provider = new CourseFilterQueryProvider(em());
+        final FilterQuery<Course> query = provider.createQuery(preql);
         query.setParameters(parameters)
-                .addExpression((cb, root) -> cb.equal(root.get("tenant").get("id"), 1));
-        return query.getSingleResult();
+                .addExpression((cb, root) -> cb.equal(root.get("tenant").get("id"), 1))
+                .setPagination(new Pagination(100, 0));
+        return query.count();
     }
 
 

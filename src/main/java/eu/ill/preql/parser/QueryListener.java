@@ -57,29 +57,29 @@ public class QueryListener extends FilterBaseListener {
     public void exitComparatorExpression(final FilterParser.ComparatorExpressionContext context) {
         final String     identifier = context.parameter().IDENTIFIER().getText();
         final Field field      = parser.getField(context.field().getText());
-        final Expression attribute  = field.getAttribute();
+        final Expression path  = field.getPath();
         final Object     value      = parser.parseValue(field, identifier, parser.getParameter(identifier));
         final Expression expression = cb.literal(value);
 
         switch (context.operator.getType()) {
             case FilterLexer.GT:
-                addExpression(context, cb.greaterThan(attribute, expression));
+                addExpression(context, cb.greaterThan(path, expression));
                 break;
             case FilterLexer.GT_EQ:
-                addExpression(context, cb.greaterThanOrEqualTo(attribute, expression));
+                addExpression(context, cb.greaterThanOrEqualTo(path, expression));
                 break;
             case FilterLexer.LT:
-                addExpression(context, cb.lessThan(attribute, expression));
+                addExpression(context, cb.lessThan(path, expression));
                 break;
             case FilterLexer.LT_EQ:
-                addExpression(context, cb.lessThanOrEqualTo(attribute, expression));
+                addExpression(context, cb.lessThanOrEqualTo(path, expression));
                 break;
             case FilterLexer.EQ:
-                addExpression(context, cb.equal(attribute, expression));
+                addExpression(context, cb.equal(path, expression));
                 break;
             case FilterLexer.NOT_EQ1:
             case FilterLexer.NOT_EQ2:
-                addExpression(context, cb.notEqual(attribute, expression));
+                addExpression(context, cb.notEqual(path, expression));
                 break;
             default:
                 throw new RuntimeException("Unexpected comparison operator");
@@ -117,13 +117,13 @@ public class QueryListener extends FilterBaseListener {
         final Field      field       = parser.getField(context.field().getText());
         final String     identifier1 = context.parameter(0).IDENTIFIER().getText();
         final String     identifier2 = context.parameter(1).IDENTIFIER().getText();
-        final Expression attribute   = field.getAttribute();
+        final Expression path   = field.getPath();
         final Comparable lowerValue  = (Comparable) parser.parseValue(field, identifier1, parser.getParameter(identifier1));
         final Comparable upperValue  = (Comparable) parser.parseValue(field, identifier2, parser.getParameter(identifier2));
         if (context.NOT() == null) {
-            addExpression(context, cb.between(attribute, lowerValue, upperValue));
+            addExpression(context, cb.between(path, lowerValue, upperValue));
         } else {
-            addExpression(context, cb.not(cb.between(attribute, lowerValue, upperValue)));
+            addExpression(context, cb.not(cb.between(path, lowerValue, upperValue)));
         }
     }
 
@@ -136,7 +136,7 @@ public class QueryListener extends FilterBaseListener {
     public void exitInExpression(final FilterParser.InExpressionContext context) {
         final String  identifier = context.parameter().IDENTIFIER().getText();
         final Field   field      = parser.getField(context.field().getText());
-        final Path<?> attribute  = field.getAttribute();
+        final Path<?> path  = field.getPath();
         final Object  parameter  = parser.getParameter(identifier);
         if (parameter instanceof List) {
             final List<Object> values = new ArrayList<>();
@@ -144,9 +144,9 @@ public class QueryListener extends FilterBaseListener {
                 values.add(parser.parseValue(field, identifier, value));
             }
             if (context.NOT() == null) {
-                addExpression(context, attribute.in(values));
+                addExpression(context, path.in(values));
             } else {
-                addExpression(context, cb.not(attribute.in(values)));
+                addExpression(context, cb.not(path.in(values)));
             }
         } else {
             throw new InvalidQueryException(format("Expected a list of parameters for parameter: '%s'", field.getName()));
@@ -161,11 +161,11 @@ public class QueryListener extends FilterBaseListener {
     @Override
     public void exitNullExpression(final FilterParser.NullExpressionContext context) {
         final Field   field     = parser.getField(context.field().getText());
-        final Path<?> attribute = field.getAttribute();
+        final Path<?> path = field.getPath();
         if (context.NOT() == null) {
-            addExpression(context, cb.isNull(attribute));
+            addExpression(context, cb.isNull(path));
         } else {
-            addExpression(context, cb.isNotNull(attribute));
+            addExpression(context, cb.isNotNull(path));
         }
     }
 
@@ -179,12 +179,12 @@ public class QueryListener extends FilterBaseListener {
     public void exitLikeExpression(final FilterParser.LikeExpressionContext context) {
         final String     identifier = context.parameter().IDENTIFIER().getText();
         final Field      field      = parser.getField(context.field().getText());
-        final Expression attribute  = field.getAttribute();
+        final Expression path  = field.getPath();
         final String     value      = (String) parser.parseValue(field, identifier, parser.getParameter(identifier));
         if (context.NOT() == null) {
-            addExpression(context, cb.like(attribute, value));
+            addExpression(context, cb.like(path, value));
         } else {
-            addExpression(context, cb.notLike(attribute, value));
+            addExpression(context, cb.notLike(path, value));
         }
     }
 
